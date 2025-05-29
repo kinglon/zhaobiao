@@ -1,0 +1,53 @@
+﻿#ifndef MAINWINDOW_H
+#define MAINWINDOW_H
+
+#include <QMainWindow>
+#include "logincontroller.h"
+#include "collectcontroller.h"
+
+QT_BEGIN_NAMESPACE
+namespace Ui { class MainWindow; }
+QT_END_NAMESPACE
+
+class MainWindow : public QMainWindow
+{
+    Q_OBJECT
+
+public:
+    MainWindow(QWidget *parent = nullptr);
+    ~MainWindow();
+
+private slots:
+    void onPrintLog(QString content);
+
+    void onLoginButtonClicked();
+
+    void onStartButtonClicked();
+
+    void onStopButtonClicked();
+
+    void onOpenFolderButtonClicked();
+
+    void onKeyWordComboCurrentTextChanged(QString text);
+
+private:
+    void initCtrls();
+
+    void updateButtonStatus();
+
+    void initController();
+
+private:
+    Ui::MainWindow *ui;
+
+    LoginController m_loginController;
+
+    CollectController* m_collectController = nullptr;
+
+    // 标志是否正在采集
+    bool m_collecting = false;
+
+    // 最后一次采集保存目录
+    QString m_lastSavedPath;
+};
+#endif // MAINWINDOW_H
