@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QShortcut>
 #include "logincontroller.h"
 #include "collectcontroller.h"
 
@@ -18,6 +19,8 @@ public:
     ~MainWindow();
 
 private slots:
+    void onCtrlDShortcut();
+
     void onPrintLog(QString content);
 
     void onLoginButtonClicked();

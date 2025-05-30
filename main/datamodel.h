@@ -33,6 +33,9 @@ class ZhaoBiao
     };
 
 public:
+    // ID
+    QString m_id;
+
     // 标题
     QString m_title;
 

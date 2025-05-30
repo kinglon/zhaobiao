@@ -1,4 +1,4 @@
-QT       += core gui
+QT       += core gui network
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -15,12 +15,15 @@ SOURCES += \
     Utility/ImPath.cpp \
     Utility/LogBuffer.cpp \
     Utility/LogUtil.cpp \
+    Utility/SyncHttpClient.cpp \
     collectcontroller.cpp \
     logincontroller.cpp \
     main.cpp \
     mainwindow.cpp \
+    qcompressor.cpp \
     settingmanager.cpp \
-    uiutil.cpp
+    uiutil.cpp \
+    zhaobiaohttpclient.cpp
 
 HEADERS += \
     Utility/DumpUtil.h \
@@ -30,12 +33,15 @@ HEADERS += \
     Utility/LogBuffer.h \
     Utility/LogMacro.h \
     Utility/LogUtil.h \
+    Utility/SyncHttpClient.h \
     collectcontroller.h \
     datamodel.h \
     logincontroller.h \
     mainwindow.h \
+    qcompressor.h \
     settingmanager.h \
-    uiutil.h
+    uiutil.h \
+    zhaobiaohttpclient.h
 
 FORMS += \
     mainwindow.ui

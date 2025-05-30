@@ -3,6 +3,7 @@
 #include "settingmanager.h"
 #include <QDateTime>
 #include <QDesktopServices>
+#include "zhaobiaohttpclient.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -12,6 +13,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
     setWindowFlag(Qt::MSWindowsFixedSizeDialogHint, true);
+
+    QShortcut* ctrlDShortcut = new QShortcut(QKeySequence("Ctrl+D"), this);
+    connect(ctrlDShortcut, &QShortcut::activated, this, &MainWindow::onCtrlDShortcut);
 
     initCtrls();
     initController();
@@ -49,6 +53,11 @@ void MainWindow::updateButtonStatus()
 void MainWindow::initController()
 {
     connect(&m_loginController, &LoginController::printLog, this, &MainWindow::onPrintLog);
+}
+
+void MainWindow::onCtrlDShortcut()
+{
+    ZhaoBiaoHttpClient::test();
 }
 
 void MainWindow::onPrintLog(QString content)
