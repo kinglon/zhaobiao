@@ -46,6 +46,8 @@ HEADERS += \
 FORMS += \
     mainwindow.ui
 
+SUBDIRS += ../QGumboParser/QGumboParser
+
 # Enable PDB generation
 QMAKE_CFLAGS_RELEASE += /Zi
 QMAKE_CXXFLAGS_RELEASE += /Zi
