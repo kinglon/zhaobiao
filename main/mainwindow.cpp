@@ -4,6 +4,11 @@
 #include <QDateTime>
 #include <QDesktopServices>
 #include "zhaobiaohttpclient.h"
+#include "browserwindow.h"
+#include "statusmanager.h"
+#include "uiutil.h"
+
+#define HOME_PAGE "https://www.zhaobiao.cn/"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -18,6 +23,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ctrlDShortcut, &QShortcut::activated, this, &MainWindow::onCtrlDShortcut);
 
     initCtrls();
+    initBrowser();
     initController();
 }
 
@@ -43,6 +49,12 @@ void MainWindow::initCtrls()
     updateButtonStatus();
 }
 
+void MainWindow::initBrowser()
+{
+    BrowserWindow::getInstance()->setHideWhenClose(true);
+    BrowserWindow::getInstance()->load(QUrl(HOME_PAGE));
+}
+
 void MainWindow::updateButtonStatus()
 {
     ui->pushButtonLogin->setEnabled(!m_collecting);
@@ -53,6 +65,7 @@ void MainWindow::updateButtonStatus()
 void MainWindow::initController()
 {
     connect(&m_loginController, &LoginController::printLog, this, &MainWindow::onPrintLog);
+    m_loginController.run();
 }
 
 void MainWindow::onCtrlDShortcut()
@@ -79,11 +92,19 @@ void MainWindow::onPrintLog(QString content)
 
 void MainWindow::onLoginButtonClicked()
 {
+    BrowserWindow::getInstance()->load(QUrl(HOME_PAGE));
+    BrowserWindow::getInstance()->showMaximized();
     m_loginController.run();
 }
 
 void MainWindow::onStartButtonClicked()
 {
+    if (StatusManager::getInstance()->getCookies().isEmpty())
+    {
+        UiUtil::showTip(QString::fromWCharArray(L"请先登录"));
+        return;
+    }
+
     m_collectController = new CollectController();
     connect(m_collectController, &CollectController::printLog, this, &MainWindow::onPrintLog);
     connect(m_collectController, &CollectController::runFinish, [this](bool success, QString savedPath) {

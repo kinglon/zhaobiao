@@ -36,6 +36,8 @@ private slots:
 private:
     void initCtrls();
 
+    void initBrowser();
+
     void updateButtonStatus();
 
     void initController();

@@ -38,26 +38,11 @@ void SettingManager::load()
     QJsonDocument jsonDocument = QJsonDocument::fromJson(jsonData);
     QJsonObject root = jsonDocument.object();
 
-    if (root.contains("log_level"))
-    {
-        m_logLevel = root["log_level"].toInt();
-    }
-}
-
-void SettingManager::save()
-{
-    QJsonObject root;
-    root["log_level"] = m_logLevel;
-
-    QJsonDocument jsonDocument(root);
-    QByteArray jsonData = jsonDocument.toJson(QJsonDocument::Indented);
-    std::wstring strConfFilePath = CImPath::GetConfPath() + L"configs.json";
-    QFile file(QString::fromStdWString(strConfFilePath));
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
-    {
-        qCritical("failed to save setting");
-        return;
-    }
-    file.write(jsonData);
-    file.close();
+    m_logLevel = root["log_level"].toInt();
+    m_request_interval_ms = root["request_interval_ms"].toInt();
+    m_enableWebviewLog = root["enable_webview_log"].toInt();
+    m_cacheJsCode = root["cache_jscode"].toInt();
+    m_browserWidth = root["browser_width"].toInt();
+    m_browserHeight = root["browser_height"].toInt();
+    m_debug = root["debug"].toBool();
 }

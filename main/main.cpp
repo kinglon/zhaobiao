@@ -14,6 +14,15 @@ void logToFile(QtMsgType type, const QMessageLogContext &context, const QString 
 {
     if (g_dllLog)
     {
+        // 未启用浏览器日志，过滤掉
+        if (!SettingManager::getInstance()->m_enableWebviewLog)
+        {
+            if (context.file && QString(context.file).indexOf("http") != -1)
+            {
+                return;
+            }
+        }
+
         ELogLevel logLevel = ELogLevel::LOG_LEVEL_ERROR;
         if (type == QtMsgType::QtDebugMsg)
         {

@@ -1,4 +1,4 @@
-QT       += core gui network
+QT       += core gui network webenginewidgets
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -16,12 +16,15 @@ SOURCES += \
     Utility/LogBuffer.cpp \
     Utility/LogUtil.cpp \
     Utility/SyncHttpClient.cpp \
+    browserwindow.cpp \
     collectcontroller.cpp \
+    jscodemanager.cpp \
     logincontroller.cpp \
     main.cpp \
     mainwindow.cpp \
     qcompressor.cpp \
     settingmanager.cpp \
+    statusmanager.cpp \
     uiutil.cpp \
     zhaobiaohttpclient.cpp
 
@@ -34,16 +37,20 @@ HEADERS += \
     Utility/LogMacro.h \
     Utility/LogUtil.h \
     Utility/SyncHttpClient.h \
+    browserwindow.h \
     collectcontroller.h \
     datamodel.h \
+    jscodemanager.h \
     logincontroller.h \
     mainwindow.h \
     qcompressor.h \
     settingmanager.h \
+    statusmanager.h \
     uiutil.h \
     zhaobiaohttpclient.h
 
 FORMS += \
+    browserwindow.ui \
     mainwindow.ui
 
 SUBDIRS += ../QGumboParser/QGumboParser
