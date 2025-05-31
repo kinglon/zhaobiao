@@ -3,6 +3,8 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <qgumbodocument.h>
+#include <qgumbonode.h>
 
 ZhaoBiaoHttpClient::ZhaoBiaoHttpClient(QObject *parent)
     : SyncHttpClient{parent}
@@ -42,6 +44,43 @@ bool ZhaoBiaoHttpClient::search(const SearchCondition& condition, int& totalPage
     reply->deleteLater();
 
     return success;
+}
+
+bool ZhaoBiaoHttpClient::getDetail(QString link, ZhaoBiao& zhaoBiao)
+{
+    QNetworkRequest request;
+    request.setUrl(QUrl(link));
+
+    addCommonHeader(request);
+    request.setRawHeader("Cookie", m_cookies.toUtf8());
+
+    QNetworkReply* reply = m_networkAccessManager.get(request);
+
+    waitForResponse();
+
+    bool success = handleGetDetailReply(reply, zhaoBiao);
+    reply->deleteLater();
+
+    return success;
+}
+
+void ZhaoBiaoHttpClient::handleErrorReply(QNetworkReply* reply)
+{
+    if (reply->error() == QNetworkReply::UnknownServerError)
+    {
+        QByteArray data;
+        if (getData(reply, data))
+        {
+            QString dataString = QString::fromUtf8(data);
+            int begin = dataString.indexOf("document.cookie");
+            if (begin > 0)
+            {
+                int end = dataString.indexOf(");", begin);
+                m_updateCookieJsCode = dataString.mid(begin, end+2-begin);
+                m_needUpdateCookie = true;
+            }
+        }
+    }
 }
 
 bool ZhaoBiaoHttpClient::handleSearchReply(QNetworkReply* reply, int& totalPage, QVector<ZhaoBiao>& zhaoBiaos)
@@ -107,17 +146,98 @@ bool ZhaoBiaoHttpClient::handleSearchReply(QNetworkReply* reply, int& totalPage,
     return true;
 }
 
+bool ZhaoBiaoHttpClient::handleGetDetailReply(QNetworkReply* reply, ZhaoBiao& zhaoBiao)
+{
+    if (reply->error() != QNetworkReply::NoError)
+    {
+        handleErrorReply(reply);
+        m_lastError = QString::fromWCharArray(L"获取正文内容和附件失败，错误码：%1").arg(reply->error());
+        return false;
+    }
+
+    QByteArray data;
+    if (!getData(reply, data))
+    {
+        m_lastError = QString::fromWCharArray(L"获取正文内容和附件失败，错误：解压数据遇到问题");
+        return false;
+    }
+
+    auto doc = QGumboDocument::parse(data);
+    auto root = doc.rootNode();
+
+    // 检查是否登录
+    auto notices = root.getElementsByClassName("w-noticeHide");
+    if (!notices.empty())
+    {
+        m_needLogin = true;
+        m_lastError = QString::fromWCharArray(L"获取正文内容和附件失败，错误：需要登录");
+        return false;
+    }
+
+    auto details = root.getElementsByClassName("bid_details_zw");
+    if (details.empty())
+    {
+        m_lastError = QString::fromWCharArray(L"获取正文内容和附件失败，错误：没有解析到正文内容的元素");
+        return false;
+    }
+
+    zhaoBiao.m_content = details[0].innerTextV2();
+
+    auto accessories = root.getElementsByClassName("accessory_item");
+    zhaoBiao.m_attachments.clear();
+    for (auto& accessory : accessories)
+    {
+        Attachment attachment;
+        auto fileNameNodes = accessory.getElementsByClassName("i-left-text");
+        if (fileNameNodes.empty())
+        {
+            m_lastError = QString::fromWCharArray(L"获取正文内容和附件失败，错误：没有解析到附件的文件名元素");
+            return false;
+        }
+
+        auto part1Nodes = fileNameNodes[0].getElementsByClassName("ellipsis");
+        if (part1Nodes.empty())
+        {
+            m_lastError = QString::fromWCharArray(L"获取正文内容和附件失败，错误：没有解析到附件的文件名部分");
+            return false;
+        }
+        attachment.m_fileName = part1Nodes[0].innerTextV2().trimmed();
+
+        auto part2Nodes = fileNameNodes[0].getElementsByClassName("tuning");
+        if (!part2Nodes.empty())
+        {
+            attachment.m_fileName += QString(".") + part2Nodes[0].innerTextV2().trimmed();
+        }
+
+        auto downloadUrls = accessory.getElementsByTagName(HtmlTag::A);
+        if (downloadUrls.empty())
+        {
+            m_lastError = QString::fromWCharArray(L"获取正文内容和附件失败，错误：没有解析到附件的下载地址");
+            return false;
+        }
+        attachment.m_downloadLink = downloadUrls[0].getAttribute("href");
+        zhaoBiao.m_attachments.append(attachment);
+    }
+
+    return true;
+}
+
 void ZhaoBiaoHttpClient::test()
 {
     ZhaoBiaoHttpClient client;
-    client.m_cookies = "__jsluid_s=e86731baa7324f3e3f5cb9e3f32ad01f; reg_referer=aHR0cHM6Ly93d3cuemhhb2JpYW8uY24v; _clck=smrqgm%7C2%7Cfwc%7C0%7C1936; cookie_login_domain=www; Cookies_token=340fb233-9289-4aa5-9a19-566f3188417f; JSESSIONID=FA297A5A55DBC1FE04D018D4903F14AC; Cookies_SearchHistory_new=\"MjAyNS0wNS0zMEAjO+efv+WxseW3peeoi+aWveW3pSDnn7/lsbHmlr3lt6Ug55+/5bGx5oC75om/5YyFIOefv+WxseW3peeoi+aAu+aJv+WMhSDnn7/lsbHlt6XnqIvmlr3lt6XmgLvmib/ljIUjIw==\"; _clsk=1uu9lzm%7C1748590906140%7C5%7C0%7Cn.clarity.ms%2Fcollect";
+    client.m_cookies = "__jsluid_s=de2c4162a40859c6b8de1a6c8c501606; reg_referer=aHR0cHM6Ly93d3cuemhhb2JpYW8uY24v; cookie_login_domain=www; _clck=smrqgm%7C2%7Cfwd%7C0%7C1936; Cookies_token=1532ab00-5839-4138-a877-4383b87073a5; JSESSIONID=7B36BD921E8CCF36DFF84625F36272CE; _clsk=xo095b%7C1748684150390%7C2%7C0%7Cn.clarity.ms%2Fcollect; __jsl_clearance_s=1748684148.345|0|jswWvN95r82%2FOavtifWhEQzlyvQ%3D";
 
-    SearchCondition condition;
-    condition.m_keyWord = QString::fromWCharArray(L"矿山工程施工 矿山施工 矿山总承包 矿山工程总承包 矿山工程施工总承包");
-    condition.m_beginDate = "2025-05-27";
-    condition.m_endDate = "2025-05-30";
+    // 搜索
+//    SearchCondition condition;
+//    condition.m_keyWord = QString::fromWCharArray(L"矿山工程施工 矿山施工 矿山总承包 矿山工程总承包 矿山工程施工总承包");
+//    condition.m_beginDate = "2025-05-27";
+//    condition.m_endDate = "2025-05-30";
 
-    int totalPage = 0;
-    QVector<ZhaoBiao> zhaoBiaos;
-    client.search(condition, totalPage, zhaoBiaos);
+//    int totalPage = 0;
+//    QVector<ZhaoBiao> zhaoBiaos;
+//    client.search(condition, totalPage, zhaoBiaos);
+
+    // 获取正文内容和附件
+    ZhaoBiao zhaoBiao;
+    client.getDetail("https://zb.zhaobiao.cn/bidding_v_81f8eeb9e32b258115088a177680b3e0.html", zhaoBiao);
 }

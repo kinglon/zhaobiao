@@ -24,6 +24,9 @@ protected:
     // 获取响应数据，如果有压缩会自动解压缩
     bool getData(QNetworkReply* reply, QByteArray& data);
 
+    // 打印请求信息，方便排查问题
+    void printRequest(QNetworkRequest& request);
+
 private slots:
     void onHttpFinished(QNetworkReply *reply);
 

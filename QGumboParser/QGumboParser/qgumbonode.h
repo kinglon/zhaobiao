@@ -1,4 +1,4 @@
-#ifndef QGUMBONODE_H
+﻿#ifndef QGUMBONODE_H
 #define QGUMBONODE_H
 
 #include <vector>
@@ -40,7 +40,12 @@ public:
     bool isElement() const;
     bool hasAttribute(const QString&) const;
 
+    // 获取一级子节点内的文本
     QString innerText() const;
+
+    // 获取子节点内的所有文本
+    QString innerTextV2() const;
+
     QString outerHtml() const;
     QString getAttribute(const QString&) const;
 

@@ -33,11 +33,18 @@ public:
 
     bool search(const SearchCondition& condition, int& totalPage, QVector<ZhaoBiao>& zhaoBiaos);
 
+    // 获取详情，包括：正文和附件
+    bool getDetail(QString link, ZhaoBiao& zhaoBiao);
+
     // 方便接口测试
     static void test();
 
-private:
+private:    
+    void handleErrorReply(QNetworkReply* reply);
+
     bool handleSearchReply(QNetworkReply* reply, int& totalPage, QVector<ZhaoBiao>& zhaoBiaos);
+
+    bool handleGetDetailReply(QNetworkReply* reply, ZhaoBiao& zhaoBiao);
 
 public:
     QString m_cookies;
@@ -47,6 +54,12 @@ public:
 
     // 请求失败时，标志是否因为未登录导致
     bool m_needLogin = false;
+
+    // 标志是否需要更新cookie
+    bool m_needUpdateCookie = false;
+
+    // 更新cookie的js代码，m_needUpdateCookie=true时有效
+    QString m_updateCookieJsCode;
 };
 
 #endif // ZHAOBIAOHTTPCLIENT_H

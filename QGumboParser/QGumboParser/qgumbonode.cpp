@@ -1,4 +1,4 @@
-#include <cstring>
+﻿#include <cstring>
 #include <sstream>
 #include <QString>
 #include <QDebug>
@@ -26,6 +26,25 @@ bool iterateTree(GumboNode* node, TFunctor& functor)
     }
 
     return false;
+}
+
+// v2版本，遍历所有的子节点
+template<typename TFunctor>
+void iterateTreeV2(GumboNode* node, TFunctor& functor)
+{
+    if (!node) {
+        return;
+    }
+
+    functor(node);
+
+    if (node->type != GUMBO_NODE_ELEMENT) {
+        return;
+    }
+
+    for (uint i = 0; i < node->v.element.children.length; ++i) {
+        iterateTreeV2(static_cast<GumboNode*>(node->v.element.children.data[i]), functor);
+    }
 }
 
 template<typename TFunctor>
@@ -205,6 +224,23 @@ QString QGumboNode::innerText() const
     };
 
     iterateChildren(ptr_, functor);
+
+    return text;
+}
+
+QString QGumboNode::innerTextV2() const
+{
+    Q_ASSERT(ptr_);
+
+    QString text;
+
+    auto functor = [&text] (GumboNode* node) {
+        if (node->type == GUMBO_NODE_TEXT) {
+            text += QString::fromUtf8(node->v.text.text);
+        }
+    };
+
+    iterateTreeV2(ptr_, functor);
 
     return text;
 }

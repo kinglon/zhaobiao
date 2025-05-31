@@ -23,7 +23,8 @@ void SyncHttpClient::onHttpFinished(QNetworkReply *reply)
 void SyncHttpClient::addCommonHeader(QNetworkRequest& request)
 {
     request.setRawHeader("Accept", "application/json, text/plain, */*");
-    request.setRawHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36");
+    request.setRawHeader("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8");
+    request.setRawHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36");
     request.setRawHeader("Content-Type", "application/json");
     request.setRawHeader("Accept-Encoding", "gzip");
 }
@@ -67,4 +68,14 @@ bool SyncHttpClient::getData(QNetworkReply* reply, QByteArray& data)
     }
 
     return true;
+}
+
+void SyncHttpClient::printRequest(QNetworkRequest& request)
+{
+    qDebug("url: %s", request.url().toString().toStdString().c_str());
+    auto headers = request.rawHeaderList();
+    for (auto& header : headers)
+    {
+        qDebug("header %s: %s", header.toStdString().c_str(), request.rawHeader(header).toStdString().c_str());
+    }
 }
