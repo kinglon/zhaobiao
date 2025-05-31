@@ -36,6 +36,8 @@ public:
     // 获取详情，包括：正文和附件
     bool getDetail(QString link, ZhaoBiao& zhaoBiao);
 
+    bool downloadFile(QString link, QString savedFilePath);
+
     // 方便接口测试
     static void test();
 
@@ -45,6 +47,8 @@ private:
     bool handleSearchReply(QNetworkReply* reply, int& totalPage, QVector<ZhaoBiao>& zhaoBiaos);
 
     bool handleGetDetailReply(QNetworkReply* reply, ZhaoBiao& zhaoBiao);
+
+    bool handleDownloadFileReply(QNetworkReply* reply, QString savedFilePath);
 
 public:
     QString m_cookies;

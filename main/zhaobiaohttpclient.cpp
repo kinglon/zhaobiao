@@ -5,6 +5,7 @@
 #include <QJsonArray>
 #include <qgumbodocument.h>
 #include <qgumbonode.h>
+#include <QFile>
 
 ZhaoBiaoHttpClient::ZhaoBiaoHttpClient(QObject *parent)
     : SyncHttpClient{parent}
@@ -59,6 +60,27 @@ bool ZhaoBiaoHttpClient::getDetail(QString link, ZhaoBiao& zhaoBiao)
     waitForResponse();
 
     bool success = handleGetDetailReply(reply, zhaoBiao);
+    reply->deleteLater();
+
+    return success;
+}
+
+bool ZhaoBiaoHttpClient::downloadFile(QString link, QString savedFilePath)
+{
+    QNetworkRequest request;
+    request.setUrl(QUrl(link));
+
+    addCommonHeader(request);
+    request.setRawHeader("Cookie", m_cookies.toUtf8());
+
+    int oldTimeOut = m_networkAccessManager.transferTimeout();
+    m_networkAccessManager.setTransferTimeout(180*1000);
+    QNetworkReply* reply = m_networkAccessManager.get(request);
+
+    waitForResponse();
+
+    m_networkAccessManager.setTransferTimeout(oldTimeOut);
+    bool success = handleDownloadFileReply(reply, savedFilePath);
     reply->deleteLater();
 
     return success;
@@ -222,12 +244,48 @@ bool ZhaoBiaoHttpClient::handleGetDetailReply(QNetworkReply* reply, ZhaoBiao& zh
     return true;
 }
 
+bool ZhaoBiaoHttpClient::handleDownloadFileReply(QNetworkReply* reply, QString savedFilePath)
+{
+    if (reply->error() != QNetworkReply::NoError)
+    {
+        m_lastError = QString::fromWCharArray(L"下载文件失败，错误码：%1").arg(reply->error());
+        return false;
+    }
+
+    QByteArray data;
+    if (!getData(reply, data))
+    {
+        m_lastError = QString::fromWCharArray(L"下载文件失败，错误：解压数据遇到问题");
+        return false;
+    }
+
+    if (QString::fromUtf8(data).contains("请登录后重试"))
+    {
+        m_needLogin = true;
+        m_lastError = QString::fromWCharArray(L"下载文件失败，错误：未登录");
+        return false;
+    }
+
+    QFile file(savedFilePath);
+    if (file.open(QIODevice::WriteOnly))
+    {
+        file.write(data);
+        file.close();
+        return true;
+    }
+    else
+    {
+        m_lastError = QString::fromWCharArray(L"下载文件失败，错误：写入数据到文件遇到问题");
+        return false;
+    }
+}
+
 void ZhaoBiaoHttpClient::test()
 {
     ZhaoBiaoHttpClient client;
-    client.m_cookies = "__jsluid_s=de2c4162a40859c6b8de1a6c8c501606; reg_referer=aHR0cHM6Ly93d3cuemhhb2JpYW8uY24v; cookie_login_domain=www; _clck=smrqgm%7C2%7Cfwd%7C0%7C1936; Cookies_token=1532ab00-5839-4138-a877-4383b87073a5; JSESSIONID=7B36BD921E8CCF36DFF84625F36272CE; _clsk=xo095b%7C1748684150390%7C2%7C0%7Cn.clarity.ms%2Fcollect; __jsl_clearance_s=1748684148.345|0|jswWvN95r82%2FOavtifWhEQzlyvQ%3D";
+    client.m_cookies = "__jsluid_s=d48f337061c68a7b9199aa374d4fe592; reg_referer=aHR0cHM6Ly93d3cuemhhb2JpYW8uY24v; cookie_login_domain=www; _clck=smrqgm%7C2%7Cfwd%7C0%7C1936; Cookies_token=1532ab00-5839-4138-a877-4383b87073a5; _clsk=xo095b%7C1748687878578%7C8%7C0%7Cn.clarity.ms%2Fcollect";
 
-    // 搜索
+//    // 搜索
 //    SearchCondition condition;
 //    condition.m_keyWord = QString::fromWCharArray(L"矿山工程施工 矿山施工 矿山总承包 矿山工程总承包 矿山工程施工总承包");
 //    condition.m_beginDate = "2025-05-27";
@@ -237,7 +295,11 @@ void ZhaoBiaoHttpClient::test()
 //    QVector<ZhaoBiao> zhaoBiaos;
 //    client.search(condition, totalPage, zhaoBiaos);
 
-    // 获取正文内容和附件
-    ZhaoBiao zhaoBiao;
-    client.getDetail("https://zb.zhaobiao.cn/bidding_v_81f8eeb9e32b258115088a177680b3e0.html", zhaoBiao);
+//    // 获取正文内容和附件
+//    ZhaoBiao zhaoBiao;
+//    client.getDetail("https://zb.zhaobiao.cn/bidding_v_81f8eeb9e32b258115088a177680b3e0.html", zhaoBiao);
+
+    // 下载文件
+    QString downloadUrl = "https://zbfile.zhaobiao.cn/resources/styles/v2/jsp/bidFiledown.jsp?id=2093062696&provCode=511700&channel=bidding&docid=197120455&user=42994fb59c456d70d9e7730e1b4e6833";
+    client.downloadFile(downloadUrl, R"(C:\Users\zengxiangbin\Downloads\aaa.pdf)");
 }
