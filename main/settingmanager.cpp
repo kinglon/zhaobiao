@@ -11,7 +11,7 @@ SettingManager::SettingManager()
 {
     load();
     loadKeyWord();
-    loadExcludeKeyWord();
+    loadOtherKeyWord();
 }
 
 SettingManager* SettingManager::getInstance()
@@ -118,7 +118,7 @@ void SettingManager::loadKeyWord()
     file.close();
 }
 
-void SettingManager::loadExcludeKeyWord()
+void SettingManager::loadOtherKeyWord()
 {
     std::wstring strConfFilePath = CImPath::GetConfPath() + L"其它关键词.txt";
     QFile file(QString::fromStdWString(strConfFilePath));
@@ -154,7 +154,11 @@ void SettingManager::loadExcludeKeyWord()
         QString keyword = parts[1].trimmed();
         if (type == QString::fromWCharArray(L"排除关键词"))
         {
-            m_excludeKeyWord = keyword;
+            m_excludeKeyWords = keyword.split(" ");
+        }
+        else if (type == QString::fromWCharArray(L"重要地区"))
+        {
+            m_regions = keyword.split(" ");
         }
     }
 

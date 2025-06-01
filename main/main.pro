@@ -53,7 +53,9 @@ FORMS += \
     browserwindow.ui \
     mainwindow.ui
 
-SUBDIRS += ../QGumboParser/QGumboParser
+# QXlsx
+include(../QXlsx/QXlsx.pri)
+INCLUDEPATH += ../QXlsx/header/
 
 # Enable PDB generation
 QMAKE_CFLAGS_RELEASE += /Zi

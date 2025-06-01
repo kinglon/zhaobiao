@@ -18,6 +18,7 @@ public:
 // 标
 class ZhaoBiao
 {
+public:
     enum FilterResult
     {
         FILTER_RESULT_NOT_NEED = 0,
@@ -49,7 +50,7 @@ public:
     int m_filterResult = FILTER_RESULT_NEED;
 
     // 重要等级
-    int m_priorityLevel = PRIORITY_LEVEL_HIGH;
+    int m_priorityLevel = PRIORITY_LEVEL_LOW;
 
     // 链接
     QString m_link;
@@ -62,7 +63,7 @@ public:
 
 public:
     // 获取重要性的名称
-    QString getPriorityLevel()
+    QString getPriorityLevel() const
     {
         QString name;
         switch (m_priorityLevel)

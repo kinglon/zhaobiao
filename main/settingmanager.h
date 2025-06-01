@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include <QString>
+#include <QStringList>
 #include <QVector>
 
 // 筛选关键词
@@ -28,7 +29,7 @@ public:
 private:
     void load();
     void loadKeyWord();
-    void loadExcludeKeyWord();
+    void loadOtherKeyWord();
 
 public:
     // 日志级别，默认info
@@ -54,5 +55,8 @@ public:
     QVector<FilterKeyWord> m_filterKeyWords;
 
     // 排除关键词，用于判断不是矿山施工类项目
-    QString m_excludeKeyWord;
+    QStringList m_excludeKeyWords;
+
+    // 重要地区，用于判断重要级
+    QStringList m_regions;
 };

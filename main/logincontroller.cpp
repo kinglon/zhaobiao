@@ -29,6 +29,7 @@ void LoginController::stop()
 {
     m_running = false;
 
+    BrowserWindow::getInstance()->close();
     disconnect(BrowserWindow::getInstance(), nullptr, this, nullptr);
 
     if (m_timer)
