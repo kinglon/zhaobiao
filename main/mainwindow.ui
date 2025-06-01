@@ -14,7 +14,7 @@
    <string>招标网助手</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -57,7 +57,10 @@
        <item>
         <widget class="QLineEdit" name="lineEditTitleKeyWord">
          <property name="enabled">
-          <bool>false</bool>
+          <bool>true</bool>
+         </property>
+         <property name="readOnly">
+          <bool>true</bool>
          </property>
         </widget>
        </item>
@@ -75,7 +78,10 @@
        <item>
         <widget class="QLineEdit" name="lineEditContentKeyWord">
          <property name="enabled">
-          <bool>false</bool>
+          <bool>true</bool>
+         </property>
+         <property name="readOnly">
+          <bool>true</bool>
          </property>
         </widget>
        </item>

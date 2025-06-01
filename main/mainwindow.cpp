@@ -37,8 +37,9 @@ void MainWindow::initCtrls()
     ui->comboBoxKeyWord->clear();
     for (const auto& keyWord : SettingManager::getInstance()->m_filterKeyWords)
     {
-        ui->comboBoxKeyWord->addItem(keyWord.m_name);
+        ui->comboBoxKeyWord->addItem(keyWord.m_type);
     }
+    ui->comboBoxKeyWord->setCurrentIndex(-1);
 
     connect(ui->comboBoxKeyWord, &QComboBox::currentTextChanged, this, &MainWindow::onKeyWordComboCurrentTextChanged);
     connect(ui->pushButtonLogin, &QPushButton::clicked, this, &MainWindow::onLoginButtonClicked);
@@ -105,6 +106,17 @@ void MainWindow::onStartButtonClicked()
         return;
     }
 
+    FilterKeyWord filterKeyWord;
+    filterKeyWord.m_type = ui->comboBoxKeyWord->currentText();
+    filterKeyWord.m_titleKeyWord = ui->lineEditTitleKeyWord->text();
+    filterKeyWord.m_contentKeyWord = ui->lineEditContentKeyWord->text();
+    if (filterKeyWord.m_titleKeyWord.isEmpty() || filterKeyWord.m_contentKeyWord.isEmpty())
+    {
+        UiUtil::showTip(QString::fromWCharArray(L"请先选择关键词"));
+        return;
+    }
+    StatusManager::getInstance()->setCurrentFilterKeyWord(filterKeyWord);
+
     m_collectController = new CollectController();
     connect(m_collectController, &CollectController::printLog, this, &MainWindow::onPrintLog);
     connect(m_collectController, &CollectController::runFinish, [this](bool success, QString savedPath) {
@@ -139,10 +151,12 @@ void MainWindow::onKeyWordComboCurrentTextChanged(QString text)
 {
     for (auto& keyWord : SettingManager::getInstance()->m_filterKeyWords)
     {
-        if (keyWord.m_name == text)
+        if (keyWord.m_type == text)
         {
             ui->lineEditTitleKeyWord->setText(keyWord.m_titleKeyWord);
+            ui->lineEditTitleKeyWord->setCursorPosition(0);
             ui->lineEditContentKeyWord->setText(keyWord.m_contentKeyWord);
+            ui->lineEditContentKeyWord->setCursorPosition(0);
             break;
         }
     }

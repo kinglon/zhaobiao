@@ -7,8 +7,8 @@
 class FilterKeyWord
 {
 public:
-    // 名字
-    QString m_name;
+    // 类型
+    QString m_type;
 
     // 标题关键词
     QString m_titleKeyWord;
@@ -27,6 +27,8 @@ public:
 
 private:
     void load();
+    void loadKeyWord();
+    void loadExcludeKeyWord();
 
 public:
     // 日志级别，默认info
