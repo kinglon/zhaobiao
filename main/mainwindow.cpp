@@ -53,20 +53,18 @@ void MainWindow::initCtrls()
 void MainWindow::initBrowser()
 {
     BrowserWindow::getInstance()->setHideWhenClose(true);
-    BrowserWindow::getInstance()->load(QUrl(HOME_PAGE));
 }
 
 void MainWindow::updateButtonStatus()
 {
-    ui->pushButtonLogin->setEnabled(!m_collecting);
+    ui->pushButtonStart->setEnabled(!m_collecting);
     ui->pushButtonStop->setEnabled(m_collecting);
     ui->pushButtonOpenFolder->setEnabled(!m_lastSavedPath.isEmpty());
 }
 
 void MainWindow::initController()
 {
-    connect(&m_loginController, &LoginController::printLog, this, &MainWindow::onPrintLog);
-    m_loginController.run();
+    connect(&m_loginController, &LoginController::printLog, this, &MainWindow::onPrintLog);    
 }
 
 void MainWindow::onCtrlDShortcut()

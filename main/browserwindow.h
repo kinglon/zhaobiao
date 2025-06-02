@@ -8,10 +8,22 @@
 #include <QWebEngineProfile>
 #include <QWebEngineUrlRequestInterceptor>
 #include <QScrollArea>
+#include <QNetworkCookie>
+#include <QVector>
 
 namespace Ui {
 class BrowserWindow;
 }
+
+class HttpOnlyCookie
+{
+public:
+    QString m_domain;
+
+    QString m_name;
+
+    QString m_value;
+};
 
 class WebEnginePage: public QWebEnginePage
 {
@@ -69,6 +81,9 @@ public:
     // 设置请求拦截器
     void setRequestInterceptor(QWebEngineUrlRequestInterceptor* requestInterceptor);
 
+    // 获取http only cookie
+    QString getHttpOnlyCookie(QString domain, QString name);
+
 signals:
     // 加载网页完成
     void loadFinished(bool ok);
@@ -78,6 +93,8 @@ signals:
 
 private slots:
     void onLoadFinished(bool ok);
+
+    void onCookieAdded(const QNetworkCookie &cookie);
 
 protected:
     void closeEvent(QCloseEvent *event) override;
@@ -101,6 +118,9 @@ private:
 
     // 当窗口小的时候，可以通过滚动查看整个网页
     QScrollArea* m_root = nullptr;
+
+    // HttpOnly的Cookies
+    QVector<HttpOnlyCookie> m_cookies;
 };
 
 #endif // BROWSERWINDOW_H

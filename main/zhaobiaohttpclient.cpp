@@ -6,6 +6,7 @@
 #include <qgumbodocument.h>
 #include <qgumbonode.h>
 #include <QFile>
+#include "settingmanager.h"
 
 ZhaoBiaoHttpClient::ZhaoBiaoHttpClient(QObject *parent)
     : SyncHttpClient{parent}
@@ -54,6 +55,7 @@ bool ZhaoBiaoHttpClient::getDetail(QString link, ZhaoBiao& zhaoBiao)
 
     addCommonHeader(request);
     request.setRawHeader("Cookie", m_cookies.toUtf8());
+    request.setRawHeader("Referer", link.toUtf8());
 
     QNetworkReply* reply = m_networkAccessManager.get(request);
 
@@ -94,11 +96,8 @@ void ZhaoBiaoHttpClient::handleErrorReply(QNetworkReply* reply)
         if (getData(reply, data))
         {
             QString dataString = QString::fromUtf8(data);
-            int begin = dataString.indexOf("document.cookie");
-            if (begin > 0)
+            if (dataString.contains("document.cookie"))
             {
-                int end = dataString.indexOf(");", begin);
-                m_updateCookieJsCode = dataString.mid(begin, end+2-begin);
                 m_needUpdateCookie = true;
             }
         }

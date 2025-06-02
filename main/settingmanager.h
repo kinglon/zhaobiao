@@ -48,7 +48,7 @@ public:
     int m_browserWidth = 1920;
     int m_browserHeight = 1080;
 
-    // 是否调试
+    // 调试开关，开发人员测试使用
     bool m_debug = false;
 
     // 筛选关键词

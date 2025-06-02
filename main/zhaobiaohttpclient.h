@@ -61,9 +61,6 @@ public:
 
     // 标志是否需要更新cookie
     bool m_needUpdateCookie = false;
-
-    // 更新cookie的js代码，m_needUpdateCookie=true时有效
-    QString m_updateCookieJsCode;
 };
 
 #endif // ZHAOBIAOHTTPCLIENT_H

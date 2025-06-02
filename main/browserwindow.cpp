@@ -131,6 +131,8 @@ void BrowserWindow::setProfileName(const QString& name)
             webView->setPage(page);
         }
         webView->page()->profile()->setRequestInterceptor(m_requestInterceptor);
+        QWebEngineCookieStore *cookieStore = webView->page()->profile()->cookieStore();
+        connect(cookieStore, &QWebEngineCookieStore::cookieAdded, this, &BrowserWindow::onCookieAdded);
         m_webViews[name] = webView;
     }
 
@@ -163,10 +165,51 @@ void BrowserWindow::setRequestInterceptor(QWebEngineUrlRequestInterceptor* reque
     }
 }
 
+QString BrowserWindow::getHttpOnlyCookie(QString domain, QString name)
+{
+    for (const auto& item : m_cookies)
+    {
+        if (item.m_domain == domain && item.m_name == name)
+        {
+            return item.m_value;
+        }
+    }
+
+    return "";
+}
+
 void BrowserWindow::onLoadFinished(bool ok)
 {
     qInfo("finish to load url: %s, result: %s", getUrl().toStdString().c_str(), ok?"success":"failed");
     emit loadFinished(ok);
+}
+
+void BrowserWindow::onCookieAdded(const QNetworkCookie &cookie)
+{
+    if (!cookie.isHttpOnly())
+    {
+        return;
+    }
+
+    bool found = false;
+    for (auto& item : m_cookies)
+    {
+        if (item.m_domain == cookie.domain() && item.m_name == cookie.name())
+        {
+            found = true;
+            item.m_value = cookie.value();
+            break;
+        }
+    }
+
+    if (!found)
+    {
+        HttpOnlyCookie httpOnlyCookie;
+        httpOnlyCookie.m_domain = cookie.domain();
+        httpOnlyCookie.m_name = cookie.name();
+        httpOnlyCookie.m_value = cookie.value();
+        m_cookies.append(httpOnlyCookie);
+    }
 }
 
 void BrowserWindow::closeEvent(QCloseEvent *event)

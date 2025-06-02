@@ -5,6 +5,7 @@
 #include "browserwindow.h"
 #include <QDateTime>
 #include <QDir>
+#include <QTimer>
 #include "Utility/ImPath.h"
 #include "xlsxdocument.h"
 #include "xlsxchartsheet.h"
@@ -19,7 +20,7 @@ using namespace QXlsx;
 
 CollectThread::CollectThread(QObject *parent) : QThread(parent)
 {
-    //
+    m_linkForUpdatingCookie = "https://zb.zhaobiao.cn/bidding_v_821f168da2c7571e3d1f95f5a64254b6.html";
 }
 
 void CollectThread::run()
@@ -97,6 +98,13 @@ void CollectThread::runInternal()
 
     emit printLog(QString::fromWCharArray(L"筛选既含标题关键词又含内容附件关键词：%1条").arg(targetZhaoBiaos.length()));
 
+    // 获取项目详情
+    emit printLog(QString::fromWCharArray(L"获取项目详情"));
+    if (!doGetDetail(client, targetZhaoBiaos))
+    {
+        return;
+    }
+
     // 对项目需要和不需要进行分类
     int notNeedCount = 0;
     for (auto& zhaoBiao : targetZhaoBiaos)
@@ -160,10 +168,19 @@ bool CollectThread::search(ZhaoBiaoHttpClient& client, SearchCondition condition
         if (client.search(condition, totalPage, zhaoBiaos))
         {
             appendZhaoBiao(resultZhaoBiaos, zhaoBiaos);
+
             if (currentPage >= totalPage)
             {
                 return true;
             }
+
+            // 开发人员测试，只采集前10页
+            if (SettingManager::getInstance()->m_debug && currentPage >= 10)
+            {
+                emit printLog(QString::fromWCharArray(L"开发人员测试，只采集前10页"));
+                return true;
+            }
+
             currentPage += 1;
             failedCount = 0;
         }
@@ -205,7 +222,12 @@ void CollectThread::handleZhaoBiaoClientError(ZhaoBiaoHttpClient& client)
         StatusManager::getInstance()->setCookies("");
         for (int i=0; i<60000000; i++)
         {
-            if (i%5==0)
+            int interval = 15;
+            if (SettingManager::getInstance()->m_debug)
+            {
+                interval = 1000;
+            }
+            if (i % interval == 0)
             {
                 if (client.m_needLogin)
                 {
@@ -214,8 +236,7 @@ void CollectThread::handleZhaoBiaoClientError(ZhaoBiaoHttpClient& client)
                 else if (client.m_needUpdateCookie)
                 {
                     emit printLog(QString::fromWCharArray(L"正在刷新Cookie"));
-                    QString jsCode = client.m_updateCookieJsCode + "\n" + "document.cookie";
-                    emit updateCookie(jsCode);
+                    emit updateCookie(m_linkForUpdatingCookie);
                 }
             }
 
@@ -231,7 +252,6 @@ void CollectThread::handleZhaoBiaoClientError(ZhaoBiaoHttpClient& client)
             {
                 client.m_needLogin = false;
                 client.m_needUpdateCookie = false;
-                client.m_updateCookieJsCode = "";
                 client.m_cookies = cookies;
                 return;
             }
@@ -239,6 +259,53 @@ void CollectThread::handleZhaoBiaoClientError(ZhaoBiaoHttpClient& client)
     }
 
     emit printLog(client.m_lastError);
+}
+
+bool CollectThread::doGetDetail(ZhaoBiaoHttpClient& client, QVector<ZhaoBiao>& zhaoBiaos)
+{
+    for (int i=0; i<zhaoBiaos.length(); i++)
+    {
+        ZhaoBiao& zhaoBiao = zhaoBiaos[i];
+        if (m_exit.load())
+        {
+            return false;
+        }
+
+        int failedCount = 0;
+        while (true)
+        {
+            if (failedCount >= MAX_FAILED_COUNT)
+            {
+                emit printLog(QString::fromWCharArray(L"失败已达到最大次数"));
+                return false;
+            }
+
+            if (m_exit.load())
+            {
+                return false;
+            }
+
+            QThread::sleep(1);
+
+            ZhaoBiao zhaoBiaoDetail;
+            if (client.getDetail(zhaoBiao.m_link, zhaoBiaoDetail))
+            {
+                zhaoBiao.m_content = zhaoBiaoDetail.m_content;
+                zhaoBiao.m_attachments = zhaoBiaoDetail.m_attachments;
+                break;
+            }
+            else
+            {
+                failedCount += 1;
+                m_linkForUpdatingCookie = zhaoBiao.m_link;
+                handleZhaoBiaoClientError(client);
+            }
+        }
+
+        emit printLog(QString::fromWCharArray(L"获取项目详情：%1/%2").arg(QString::number(i+1), QString::number(zhaoBiaos.length())));
+    }
+
+    return true;
 }
 
 void CollectThread::doPriority(QVector<ZhaoBiao>& zhaoBiaos)
@@ -444,7 +511,8 @@ void CollectController::run()
     connect(m_collectThread, &CollectThread::finished, this, &CollectController::onThreadFinish);
     m_collectThread->start();
 
-    connect(BrowserWindow::getInstance(), &BrowserWindow::runJsCode, this, &CollectController::onRunJsCodeFinished);
+    connect(BrowserWindow::getInstance(), &BrowserWindow::runJsCodeFinished, this, &CollectController::onRunJsCodeFinished);
+    connect(BrowserWindow::getInstance(), &BrowserWindow::loadFinished, this, &CollectController::onLoadFinished);
 }
 
 void CollectController::stop()
@@ -468,9 +536,18 @@ void CollectController::onThreadFinish()
     emit runFinish(success, savedPath);
 }
 
-void CollectController::onUpdateCookie(QString jsCode)
+void CollectController::onUpdateCookie(QString link)
 {
-    BrowserWindow::getInstance()->runJsCode("UpdateCookie", jsCode);
+    // 用浏览器访问下这个链接后，再获取cookies
+    BrowserWindow::getInstance()->load(link);
+}
+
+void CollectController::onLoadFinished(bool ok)
+{
+    if (ok)
+    {
+        BrowserWindow::getInstance()->runJsCode("UpdateCookie", "document.cookie");
+    }
 }
 
 void CollectController::onRunJsCodeFinished(const QString& id, const QVariant& result)
@@ -481,9 +558,38 @@ void CollectController::onRunJsCodeFinished(const QString& id, const QVariant& r
     }
 
     QString cookie = result.toString();
-    if (cookie.isEmpty())
+    if (!cookie.isEmpty())
     {
         qInfo("cookie: %s", cookie.toStdString().c_str());
-        StatusManager::getInstance()->setCookies(cookie);
+        QStringList items = cookie.split(";");
+        bool ok = false;
+        for (const auto& item : items)
+        {
+            if (item.contains("jsl_clearance_s"))
+            {
+                QStringList parts = item.split("|");
+                if (parts.length() >= 2 && parts[1] != "-1")
+                {
+                    QString jsluid = BrowserWindow::getInstance()->getHttpOnlyCookie("zb.zhaobiao.cn", "__jsluid_s");
+                    if (!jsluid.isEmpty())
+                    {
+                        cookie += ";__jsluid_s=" + jsluid;
+                    }
+                    ok = true;
+                    break;
+                }
+            }
+        }
+
+        if (ok)
+        {
+            StatusManager::getInstance()->setCookies(cookie);
+        }
+        else
+        {
+            QTimer::singleShot(1000, []() {
+                BrowserWindow::getInstance()->runJsCode("UpdateCookie", "document.cookie");
+            });
+        }
     }
 }

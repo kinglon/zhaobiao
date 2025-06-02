@@ -26,6 +26,8 @@ private:
 
     void handleZhaoBiaoClientError(ZhaoBiaoHttpClient& client);
 
+    bool doGetDetail(ZhaoBiaoHttpClient& client, QVector<ZhaoBiao>& zhaoBiaos);
+
     // 对项目重要性进行分类
     void doPriority(QVector<ZhaoBiao>& zhaoBiaos);
 
@@ -46,6 +48,10 @@ public:
 
     // 采集数据保存的目录
     QString m_savedPath;
+
+private:
+    // 用于刷新cookie的链接
+    QString m_linkForUpdatingCookie;
 };
 
 class CollectController : public QObject
@@ -66,9 +72,11 @@ signals:
 private slots:
     void onThreadFinish();
 
-    void onUpdateCookie(QString jsCode);
+    void onUpdateCookie(QString link);
 
     void onRunJsCodeFinished(const QString& id, const QVariant& result);
+
+    void onLoadFinished(bool ok);
 
 private:
     CollectThread* m_collectThread = nullptr;

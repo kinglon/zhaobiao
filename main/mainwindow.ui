@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>543</width>
+    <width>761</width>
     <height>475</height>
    </rect>
   </property>
@@ -19,7 +19,7 @@
      <rect>
       <x>10</x>
       <y>10</y>
-      <width>521</width>
+      <width>741</width>
       <height>461</height>
      </rect>
     </property>
@@ -120,7 +120,11 @@
       </layout>
      </item>
      <item>
-      <widget class="QTextEdit" name="textEditLog"/>
+      <widget class="QTextEdit" name="textEditLog">
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+      </widget>
      </item>
     </layout>
    </widget>
