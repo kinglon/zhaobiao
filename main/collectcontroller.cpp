@@ -575,6 +575,7 @@ void CollectController::onRunJsCodeFinished(const QString& id, const QVariant& r
                     {
                         cookie += ";__jsluid_s=" + jsluid;
                     }
+                    qDebug("cookie with jsluid: %s", cookie.toStdString().c_str());
                     ok = true;
                     break;
                 }

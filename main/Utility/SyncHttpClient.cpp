@@ -24,7 +24,7 @@ void SyncHttpClient::addCommonHeader(QNetworkRequest& request)
 {
     request.setRawHeader("Accept", "application/json, text/plain, */*");
     request.setRawHeader("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8");
-    request.setRawHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36");
+    request.setRawHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) QtWebEngine/5.15.2 Chrome/83.0.4103.122 Safari/537.36");
     request.setRawHeader("Content-Type", "application/json");
     request.setRawHeader("Accept-Encoding", "gzip");
 }

@@ -294,11 +294,11 @@ void ZhaoBiaoHttpClient::test()
 //    QVector<ZhaoBiao> zhaoBiaos;
 //    client.search(condition, totalPage, zhaoBiaos);
 
-//    // 获取正文内容和附件
-//    ZhaoBiao zhaoBiao;
-//    client.getDetail("https://zb.zhaobiao.cn/bidding_v_81f8eeb9e32b258115088a177680b3e0.html", zhaoBiao);
+    // 获取正文内容和附件
+    ZhaoBiao zhaoBiao;
+    client.getDetail("https://zb.zhaobiao.cn/bidding_v_320693088677f9e9ec35de20c0bc3690.html", zhaoBiao);
 
-    // 下载文件
-    QString downloadUrl = "https://zbfile.zhaobiao.cn/resources/styles/v2/jsp/bidFiledown.jsp?id=2093062696&provCode=511700&channel=bidding&docid=197120455&user=42994fb59c456d70d9e7730e1b4e6833";
-    client.downloadFile(downloadUrl, R"(C:\Users\zengxiangbin\Downloads\aaa.pdf)");
+//    // 下载文件
+//    QString downloadUrl = "https://zbfile.zhaobiao.cn/resources/styles/v2/jsp/bidFiledown.jsp?id=2093062696&provCode=511700&channel=bidding&docid=197120455&user=42994fb59c456d70d9e7730e1b4e6833";
+//    client.downloadFile(downloadUrl, R"(C:\Users\zengxiangbin\Downloads\aaa.pdf)");
 }
