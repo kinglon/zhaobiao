@@ -9,13 +9,13 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    Utility/DumpUtil.cpp \
-    Utility/IcrCriticalSection.cpp \
-    Utility/ImCharset.cpp \
-    Utility/ImPath.cpp \
-    Utility/LogBuffer.cpp \
-    Utility/LogUtil.cpp \
-    Utility/SyncHttpClient.cpp \
+    ../Utility/DumpUtil.cpp \
+    ../Utility/IcrCriticalSection.cpp \
+    ../Utility/ImCharset.cpp \
+    ../Utility/ImPath.cpp \
+    ../Utility/LogBuffer.cpp \
+    ../Utility/LogUtil.cpp \
+    ../Utility/SyncHttpClient.cpp \
     browserwindow.cpp \
     collectcontroller.cpp \
     jscodemanager.cpp \
@@ -29,14 +29,14 @@ SOURCES += \
     zhaobiaohttpclient.cpp
 
 HEADERS += \
-    Utility/DumpUtil.h \
-    Utility/IcrCriticalSection.h \
-    Utility/ImCharset.h \
-    Utility/ImPath.h \
-    Utility/LogBuffer.h \
-    Utility/LogMacro.h \
-    Utility/LogUtil.h \
-    Utility/SyncHttpClient.h \
+    ../Utility/DumpUtil.h \
+    ../Utility/IcrCriticalSection.h \
+    ../Utility/ImCharset.h \
+    ../Utility/ImPath.h \
+    ../Utility/LogBuffer.h \
+    ../Utility/LogMacro.h \
+    ../Utility/LogUtil.h \
+    ../Utility/SyncHttpClient.h \
     browserwindow.h \
     collectcontroller.h \
     datamodel.h \
@@ -52,6 +52,8 @@ HEADERS += \
 FORMS += \
     browserwindow.ui \
     mainwindow.ui
+
+INCLUDEPATH += ../Utility
 
 # QXlsx
 include(../QXlsx/QXlsx.pri)
