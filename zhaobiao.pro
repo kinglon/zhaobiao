@@ -1,3 +1,4 @@
 TEMPLATE = subdirs
-SUBDIRS = QGumboParser/QGumboParser main
+SUBDIRS = QGumboParser/QGumboParser main \
+    update
 CONFIG += ordered
