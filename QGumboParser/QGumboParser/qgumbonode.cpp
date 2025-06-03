@@ -236,7 +236,7 @@ QString QGumboNode::innerTextV2() const
 
     auto functor = [&text] (GumboNode* node) {
         if (node->type == GUMBO_NODE_TEXT) {
-            text += QString::fromUtf8(node->v.text.text);
+            text += QString::fromUtf8(node->v.text.text) + "\r\n";
         }
     };
 

@@ -6,8 +6,11 @@
 SyncHttpClient::SyncHttpClient(QObject *parent)
     : QObject{parent}
 {
+    // fiddler代理调试
+    // m_networkAccessManager.setProxy(QNetworkProxy(QNetworkProxy::DefaultProxy, "127.0.0.1", 8888));
     m_networkAccessManager.setProxy(QNetworkProxy());
     m_networkAccessManager.setTransferTimeout(10*1000);
+    m_networkAccessManager.setCookieJar(nullptr);
     connect(&m_networkAccessManager, &QNetworkAccessManager::finished, this, &SyncHttpClient::onHttpFinished);
 }
 

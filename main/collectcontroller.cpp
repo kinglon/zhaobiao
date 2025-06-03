@@ -560,7 +560,6 @@ void CollectController::onRunJsCodeFinished(const QString& id, const QVariant& r
     QString cookie = result.toString();
     if (!cookie.isEmpty())
     {
-        qInfo("cookie: %s", cookie.toStdString().c_str());
         QStringList items = cookie.split(";");
         bool ok = false;
         for (const auto& item : items)
@@ -573,9 +572,9 @@ void CollectController::onRunJsCodeFinished(const QString& id, const QVariant& r
                     QString jsluid = BrowserWindow::getInstance()->getHttpOnlyCookie("zb.zhaobiao.cn", "__jsluid_s");
                     if (!jsluid.isEmpty())
                     {
-                        cookie += ";__jsluid_s=" + jsluid;
+                        cookie += "; __jsluid_s=" + jsluid;
                     }
-                    qDebug("cookie with jsluid: %s", cookie.toStdString().c_str());
+                    qInfo("cookie with jsluid: %s", cookie.toStdString().c_str());
                     ok = true;
                     break;
                 }

@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
     // 启用远程调试，端口号可自定义（如 9222）
     if (SettingManager::getInstance()->m_debug)
     {
-        //qputenv("QTWEBENGINE_REMOTE_DEBUGGING", "9222");
+        qputenv("QTWEBENGINE_REMOTE_DEBUGGING", "9222");
     }
 
     qputenv("QT_FONT_DPI", "100");
