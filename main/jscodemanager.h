@@ -16,6 +16,8 @@ private:
 
 public:
     QString m_getLoginInfo;
+
+    QString m_getDetailCookie;
 };
 
 #endif // JSCODEMANAGER_H

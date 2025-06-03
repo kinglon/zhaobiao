@@ -13,6 +13,7 @@
 #include "xlsxchart.h"
 #include "xlsxrichstring.h"
 #include "xlsxworkbook.h"
+#include "jscodemanager.h"
 
 using namespace QXlsx;
 
@@ -20,7 +21,7 @@ using namespace QXlsx;
 
 CollectThread::CollectThread(QObject *parent) : QThread(parent)
 {
-    m_linkForUpdatingCookie = "https://zb.zhaobiao.cn/bidding_v_821f168da2c7571e3d1f95f5a64254b6.html";
+
 }
 
 void CollectThread::run()
@@ -187,7 +188,7 @@ bool CollectThread::search(ZhaoBiaoHttpClient& client, SearchCondition condition
         else
         {
             failedCount += 1;
-            handleZhaoBiaoClientError(client);
+            handleZhaoBiaoClientError(client, nullptr);
         }
     }
 
@@ -215,7 +216,7 @@ void CollectThread::appendZhaoBiao(QVector<ZhaoBiao>& zhaoBiaos, const QVector<Z
     }
 }
 
-void CollectThread::handleZhaoBiaoClientError(ZhaoBiaoHttpClient& client)
+void CollectThread::handleZhaoBiaoClientError(ZhaoBiaoHttpClient& client, ZhaoBiao* currentZhaoBiao)
 {
     if (client.m_needLogin || client.m_needUpdateCookie)
     {
@@ -235,8 +236,13 @@ void CollectThread::handleZhaoBiaoClientError(ZhaoBiaoHttpClient& client)
                 }
                 else if (client.m_needUpdateCookie)
                 {
+                    if (currentZhaoBiao == nullptr)
+                    {
+                        return;
+                    }
+
                     emit printLog(QString::fromWCharArray(L"正在刷新Cookie"));
-                    emit updateCookie(m_linkForUpdatingCookie);
+                    emit updateCookie(currentZhaoBiao->m_link, currentZhaoBiao->m_title);
                 }
             }
 
@@ -297,8 +303,7 @@ bool CollectThread::doGetDetail(ZhaoBiaoHttpClient& client, QVector<ZhaoBiao>& z
             else
             {
                 failedCount += 1;
-                m_linkForUpdatingCookie = zhaoBiao.m_link;
-                handleZhaoBiaoClientError(client);
+                handleZhaoBiaoClientError(client, &zhaoBiao);
             }
         }
 
@@ -511,8 +516,7 @@ void CollectController::run()
     connect(m_collectThread, &CollectThread::finished, this, &CollectController::onThreadFinish);
     m_collectThread->start();
 
-    connect(BrowserWindow::getInstance(), &BrowserWindow::runJsCodeFinished, this, &CollectController::onRunJsCodeFinished);
-    connect(BrowserWindow::getInstance(), &BrowserWindow::loadFinished, this, &CollectController::onLoadFinished);
+    connect(BrowserWindow::getInstance(), &BrowserWindow::runJsCodeFinished, this, &CollectController::onRunJsCodeFinished);    
 }
 
 void CollectController::stop()
@@ -525,6 +529,13 @@ void CollectController::stop()
 
 void CollectController::onThreadFinish()
 {
+    if (m_updateCookieTimer)
+    {
+        m_updateCookieTimer->stop();
+        m_updateCookieTimer->deleteLater();
+        m_updateCookieTimer = nullptr;
+    }
+
     disconnect(BrowserWindow::getInstance(), nullptr, this, nullptr);
 
     bool success = m_collectThread->m_success;
@@ -536,18 +547,27 @@ void CollectController::onThreadFinish()
     emit runFinish(success, savedPath);
 }
 
-void CollectController::onUpdateCookie(QString link)
+void CollectController::onUpdateCookie(QString link, QString title)
 {
     // 用浏览器访问下这个链接后，再获取cookies
     BrowserWindow::getInstance()->load(link);
-}
 
-void CollectController::onLoadFinished(bool ok)
-{
-    if (ok)
+    // 每隔一秒获取一次
+    if (m_updateCookieTimer)
     {
-        BrowserWindow::getInstance()->runJsCode("UpdateCookie", "document.cookie");
+        m_updateCookieTimer->stop();
+        m_updateCookieTimer->deleteLater();
     }
+
+    m_updateCookieTimer = new QTimer(this);
+    connect(m_updateCookieTimer, &QTimer::timeout, [title](){
+        QString jsCode = JsCodeManager::getInstance()->m_getDetailCookie;
+        QString title2 = title;
+        title2.replace("\"", "");
+        jsCode.replace("$TITLE", title2);
+        BrowserWindow::getInstance()->runJsCode("UpdateCookie", jsCode);
+    });
+    m_updateCookieTimer->start(1000);
 }
 
 void CollectController::onRunJsCodeFinished(const QString& id, const QVariant& result)
@@ -560,36 +580,19 @@ void CollectController::onRunJsCodeFinished(const QString& id, const QVariant& r
     QString cookie = result.toString();
     if (!cookie.isEmpty())
     {
-        QStringList items = cookie.split(";");
-        bool ok = false;
-        for (const auto& item : items)
+        QString jsluid = BrowserWindow::getInstance()->getHttpOnlyCookie("zb.zhaobiao.cn", "__jsluid_s");
+        if (!jsluid.isEmpty())
         {
-            if (item.contains("jsl_clearance_s"))
-            {
-                QStringList parts = item.split("|");
-                if (parts.length() >= 2 && parts[1] != "-1")
-                {
-                    QString jsluid = BrowserWindow::getInstance()->getHttpOnlyCookie("zb.zhaobiao.cn", "__jsluid_s");
-                    if (!jsluid.isEmpty())
-                    {
-                        cookie += "; __jsluid_s=" + jsluid;
-                    }
-                    qInfo("cookie with jsluid: %s", cookie.toStdString().c_str());
-                    ok = true;
-                    break;
-                }
-            }
+            cookie += "; __jsluid_s=" + jsluid;
         }
+        qInfo("cookie with jsluid: %s", cookie.toStdString().c_str());
+        StatusManager::getInstance()->setCookies(cookie);
 
-        if (ok)
+        if (m_updateCookieTimer)
         {
-            StatusManager::getInstance()->setCookies(cookie);
-        }
-        else
-        {
-            QTimer::singleShot(1000, []() {
-                BrowserWindow::getInstance()->runJsCode("UpdateCookie", "document.cookie");
-            });
+            m_updateCookieTimer->stop();
+            m_updateCookieTimer->deleteLater();
+            m_updateCookieTimer = nullptr;
         }
     }
 }

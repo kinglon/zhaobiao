@@ -24,7 +24,7 @@ private:
     // 去重追加
     void appendZhaoBiao(QVector<ZhaoBiao>& zhaoBiaos, const QVector<ZhaoBiao>& newZhaoBiaos);
 
-    void handleZhaoBiaoClientError(ZhaoBiaoHttpClient& client);
+    void handleZhaoBiaoClientError(ZhaoBiaoHttpClient& client, ZhaoBiao* currentZhaoBiao);
 
     bool doGetDetail(ZhaoBiaoHttpClient& client, QVector<ZhaoBiao>& zhaoBiaos);
 
@@ -39,7 +39,8 @@ private:
 signals:
     void printLog(QString content);
 
-    void updateCookie(QString jsCode);
+    // link项目链接，title项目标题
+    void updateCookie(QString link, QString title);
 
 public:
     std::atomic<bool> m_exit = false;
@@ -48,10 +49,6 @@ public:
 
     // 采集数据保存的目录
     QString m_savedPath;
-
-private:
-    // 用于刷新cookie的链接
-    QString m_linkForUpdatingCookie;
 };
 
 class CollectController : public QObject
@@ -72,14 +69,15 @@ signals:
 private slots:
     void onThreadFinish();
 
-    void onUpdateCookie(QString link);
+    // link项目链接，title项目标题
+    void onUpdateCookie(QString link, QString title);
 
     void onRunJsCodeFinished(const QString& id, const QVariant& result);
 
-    void onLoadFinished(bool ok);
-
 private:
     CollectThread* m_collectThread = nullptr;
+
+    QTimer* m_updateCookieTimer = nullptr;
 };
 
 #endif // COLLECTCONTROLLER_H

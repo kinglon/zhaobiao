@@ -26,4 +26,12 @@ void JsCodeManager::load()
         m_getLoginInfo = QString::fromUtf8(getLoginInfoFile.readAll());
         getLoginInfoFile.close();
     }
+
+    QString getDetailCookieFilePath = jsRootPath + "getDetailCookie.js";
+    QFile getDetailCookieFile(getDetailCookieFilePath);
+    if (getDetailCookieFile.open(QIODevice::ReadOnly))
+    {
+        m_getDetailCookie = QString::fromUtf8(getDetailCookieFile.readAll());
+        getDetailCookieFile.close();
+    }
 }
