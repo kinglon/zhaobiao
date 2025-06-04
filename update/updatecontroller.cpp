@@ -77,6 +77,7 @@ void UpdateThread::runInternal()
 bool UpdateThread::runCommandSync(const QString &program, const QStringList &arguments, QString& output)
 {
     QProcess process;
+    process.setProcessChannelMode(QProcess::MergedChannels);
     process.start(program, arguments);
 
     if (!process.waitForFinished(300000))
@@ -86,9 +87,8 @@ bool UpdateThread::runCommandSync(const QString &program, const QStringList &arg
     }
 
     // 获取输出
-    QByteArray standardOutput = process.readAllStandardOutput();
-    QByteArray errorOutput = process.readAllStandardError();
-    output = QString::fromUtf8(standardOutput) + "\r\n" + QString::fromUtf8(errorOutput);
+    output = QString::fromUtf8(process.readAll());
+
     return true;
 }
 
@@ -105,7 +105,8 @@ bool UpdateThread::doClone()
     QString output;
     if (runCommandSync(m_gitExeFilePath, arguments, output))
     {
-        if (output.contains("Cloning into") && output.contains("Receiving objects: 100%"))
+        QString dotGitPath = m_updateFolderPath+".git";
+        if (QDir(dotGitPath).exists())
         {
             return true;
         }
