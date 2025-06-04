@@ -9,7 +9,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 
     setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
-    setWindowFlag(Qt::MSWindowsFixedSizeDialogHint, true);
+    setWindowFlag(Qt::MSWindowsFixedSizeDialogHint, true);    
 
     initController();
 }
@@ -21,6 +21,10 @@ MainWindow::~MainWindow()
 
 void MainWindow::initController()
 {
+    m_ipcWorker.setKey(IPC_KEY);
+    connect(&m_ipcWorker, &IpcWorker::ipcDataArrive, this, &MainWindow::onIpcDataArrive);
+    m_ipcWorker.start();
+
     connect(&m_updateController, &UpdateController::printLog, this, &MainWindow::onPrintLog);
     m_updateController.run();
 }
@@ -42,3 +46,10 @@ void MainWindow::onPrintLog(QString content)
     ui->textEditLog->append(line);
 }
 
+void MainWindow::onIpcDataArrive(QString data)
+{
+    if (data.contains("showWindow"))
+    {
+        setVisible(true);
+    }
+}

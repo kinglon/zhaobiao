@@ -17,8 +17,30 @@ public:
 private:
     void runInternal();
 
+    bool runCommandSync(const QString &program, const QStringList &arguments, QString& output);
+
+    bool doClone();
+
+    void doUpgrade();
+
+    // 等待主程序退出
+    void doWaitMainProgramExit();
+
+    // 拷贝目录，排除.git目录和version.txt文件
+    bool doCopyDirectory(const QString &srcPath, const QString &dstPath);
+
+    void doPull();
+
+    bool needUpgrade();    
+
 signals:
     void printLog(QString content);
+
+private:
+    QString m_gitExeFilePath;
+
+    // 升级文件夹目录，尾部有后划线
+    QString m_updateFolderPath;
 };
 
 class UpdateController : public QObject

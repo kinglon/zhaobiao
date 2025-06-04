@@ -40,8 +40,19 @@ int main(int argc, char *argv[])
     // 单实例
     const wchar_t* mutexName = L"{4ED4467A-D83A-4D0A-6623-158D74420098}";
     HANDLE mutexHandle = CreateMutexW(nullptr, TRUE, mutexName);
-    if (mutexHandle == nullptr || GetLastError() == ERROR_ALREADY_EXISTS)
+    if (mutexHandle == nullptr)
     {
+        return 0;
+    }
+    else if (GetLastError() == ERROR_ALREADY_EXISTS)
+    {
+        // 默认无参数的时候，通知显示窗口
+        if (argc == 1)
+        {
+            g_dllLog = CLogUtil::GetLog(L"update2");
+            qInstallMessageHandler(logToFile);
+            IpcWorker::sendData(IPC_KEY, "showWindow");
+        }
         return 0;
     }
 
@@ -63,8 +74,17 @@ int main(int argc, char *argv[])
     }
 
     qputenv("QT_FONT_DPI", "100");
+
     QApplication a(argc, argv);
     MainWindow w;
-    w.show();
+    if (argc > 1 && QString::fromUtf8(argv[1]).contains("hide"))
+    {
+        // 明确参数指定隐藏时，不显示窗口，后台运行
+        w.hide();
+    }
+    else
+    {
+        w.show();
+    }
     return a.exec();
 }

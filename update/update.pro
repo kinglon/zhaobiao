@@ -15,6 +15,7 @@ SOURCES += \
     ../Utility/ImPath.cpp \
     ../Utility/LogBuffer.cpp \
     ../Utility/LogUtil.cpp \
+    ../Utility/ipcworker.cpp \
     main.cpp \
     mainwindow.cpp \
     settingmanager.cpp \
@@ -28,6 +29,7 @@ HEADERS += \
     ../Utility/LogBuffer.h \
     ../Utility/LogMacro.h \
     ../Utility/LogUtil.h \
+    ../Utility/ipcworker.h \
     mainwindow.h \
     settingmanager.h \
     updatecontroller.h
