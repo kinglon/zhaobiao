@@ -16,6 +16,7 @@ SOURCES += \
     ../Utility/LogBuffer.cpp \
     ../Utility/LogUtil.cpp \
     ../Utility/SyncHttpClient.cpp \
+    ../update/common/updateutil.cpp \
     browserwindow.cpp \
     collectcontroller.cpp \
     jscodemanager.cpp \
@@ -37,6 +38,7 @@ HEADERS += \
     ../Utility/LogMacro.h \
     ../Utility/LogUtil.h \
     ../Utility/SyncHttpClient.h \
+    ../update/common/updateutil.h \
     browserwindow.h \
     collectcontroller.h \
     datamodel.h \

@@ -6,6 +6,7 @@
 #include <QProcess>
 #include <QTextStream>
 #include "ImPath.h"
+#include "common/updateutil.h"
 
 #define MAX_FAILED_COUNT 20
 
@@ -54,9 +55,15 @@ void UpdateThread::runInternal()
 
     while (true)
     {
-        if (needUpgrade())
+        QThread::sleep(1);
+
+        QString currentVersion;
+        QString newVersion;
+        bool needUpgrade = UpdateUtil::needUpgrade(currentVersion, newVersion);
+        if (needUpgrade)
         {
             // 有新版本就先升级
+            emit printLog(QString::fromWCharArray(L"当前版本：%1, 新版本：%2").arg(currentVersion, newVersion));
             doUpgrade();
         }
         else
@@ -263,66 +270,6 @@ void UpdateThread::doPull()
 
         QThread::sleep(60);
     }
-}
-
-bool UpdateThread::needUpgrade()
-{
-    QFile srcVersionFile(m_updateFolderPath + "version.txt");
-    if (!srcVersionFile.exists())
-    {
-        emit printLog(QString::fromWCharArray(L"升级目录没有版本文件"));
-        return false;
-    }
-
-    QString destPath = QString::fromStdWString(CImPath::GetSoftInstallPath());
-    QFile destVersionFile(destPath + "version.txt");
-    if (!destVersionFile.exists())
-    {
-        return true;
-    }
-
-    QString srcVersion;
-    if (srcVersionFile.open(QIODevice::ReadOnly | QIODevice::Text))
-    {
-        QTextStream in(&srcVersionFile);
-        srcVersion = in.readLine().trimmed();
-        srcVersionFile.close();
-    }
-
-    QString destVersion;
-    if (destVersionFile.open(QIODevice::ReadOnly | QIODevice::Text))
-    {
-        QTextStream in(&destVersionFile);
-        destVersion = in.readLine().trimmed();
-        destVersionFile.close();
-    }
-
-    emit printLog(QString::fromWCharArray(L"当前版本：%1, 新版本：%2").arg(srcVersion, destVersion));
-
-    QStringList srcVersionParts = srcVersion.split('.');
-    QStringList destVersionParts = destVersion.split('.');
-    if (srcVersionParts.size() != 2 || destVersionParts.size() != 2)
-    {
-        emit printLog(QString::fromWCharArray(L"版本号格式错误"));
-        return false;
-    }
-
-    bool ok1, ok2;
-    int currentMajor = destVersionParts[0].toInt(&ok1);
-    int currentMinor = destVersionParts[1].toInt(&ok1);
-    int newMajor = srcVersionParts[0].toInt(&ok2);
-    int newMinor = srcVersionParts[1].toInt(&ok2);
-    if (!ok1 || !ok2) {
-        emit printLog(QString::fromWCharArray(L"版本号格式错误"));
-        return false;
-    }
-
-    if (newMajor > currentMajor || (newMajor == currentMajor && newMinor > currentMinor))
-    {
-        return true;
-    }
-
-    return false;
 }
 
 UpdateController::UpdateController(QObject *parent)

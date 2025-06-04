@@ -19,7 +19,8 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     settingmanager.cpp \
-    updatecontroller.cpp
+    updatecontroller.cpp \
+    common/updateutil.cpp
 
 HEADERS += \
     ../Utility/DumpUtil.h \
@@ -32,7 +33,8 @@ HEADERS += \
     ../Utility/ipcworker.h \
     mainwindow.h \
     settingmanager.h \
-    updatecontroller.h
+    updatecontroller.h \
+    common/updateutil.h
 
 FORMS += \
     mainwindow.ui

@@ -31,8 +31,6 @@ private:
 
     void doPull();
 
-    bool needUpgrade();    
-
 signals:
     void printLog(QString content);
 

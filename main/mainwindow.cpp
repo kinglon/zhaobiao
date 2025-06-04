@@ -7,6 +7,7 @@
 #include "browserwindow.h"
 #include "statusmanager.h"
 #include "uiutil.h"
+#include "update/common/updateutil.h"
 
 #define HOME_PAGE "https://www.zhaobiao.cn/"
 
@@ -64,6 +65,11 @@ void MainWindow::updateButtonStatus()
 
 void MainWindow::initController()
 {
+    // 启动升级程序，后台运行
+    QStringList arguments;
+    arguments.append("hide");
+    UpdateUtil::startUpgradeProgram("", arguments);
+
     connect(&m_loginController, &LoginController::printLog, this, &MainWindow::onPrintLog);    
 }
 
@@ -98,6 +104,17 @@ void MainWindow::onLoginButtonClicked()
 
 void MainWindow::onStartButtonClicked()
 {
+    // 检测是否有新版本
+    QString currentVersion;
+    QString newVersion;
+    if (UpdateUtil::needUpgrade(currentVersion, newVersion))
+    {
+        UiUtil::showTip(QString::fromWCharArray(L"检测到新版本，请升级"));
+        UpdateUtil::startUpgradeProgram("", QStringList());
+        close();
+        return;
+    }
+
     if (StatusManager::getInstance()->getCookies().isEmpty())
     {
         UiUtil::showTip(QString::fromWCharArray(L"请先登录"));
