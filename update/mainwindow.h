@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QCloseEvent>
 #include "updatecontroller.h"
 #include "ipcworker.h"
 
@@ -26,6 +27,8 @@ private slots:
     void onPrintLog(QString content);
 
     void onIpcDataArrive(QString data);
+
+    void closeEvent(QCloseEvent *event) override;
 
 private:
     Ui::MainWindow *ui;

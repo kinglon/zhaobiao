@@ -3,7 +3,7 @@ var title = "$TITLE"
 function getDetailCookie() {
 	var element = document.getElementById('infotitle')
 	if (element) {
-		var elementText = element.textContent.replaceAll('"', '')
+		var elementText = element.textContent.replace(/"/g, '')
 		if (elementText == title) {
 			return document.cookie
 		}

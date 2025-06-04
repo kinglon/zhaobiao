@@ -42,6 +42,8 @@ private:
 
     void initController();
 
+    void closeEvent(QCloseEvent *event) override;
+
 private:
     Ui::MainWindow *ui;
 

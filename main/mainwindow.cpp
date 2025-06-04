@@ -107,7 +107,7 @@ void MainWindow::onStartButtonClicked()
     // 检测是否有新版本
     QString currentVersion;
     QString newVersion;
-    if (UpdateUtil::needUpgrade(currentVersion, newVersion))
+    if (UpdateUtil::needUpgrade(newVersion, currentVersion))
     {
         UiUtil::showTip(QString::fromWCharArray(L"检测到新版本，请升级"));
         UpdateUtil::startUpgradeProgram("", QStringList());
@@ -175,4 +175,11 @@ void MainWindow::onKeyWordComboCurrentTextChanged(QString text)
             break;
         }
     }
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    BrowserWindow::getInstance()->setCanClose();
+    BrowserWindow::getInstance()->close();
+    event->accept();
 }

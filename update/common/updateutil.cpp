@@ -32,18 +32,20 @@ bool UpdateUtil::needUpgrade(QString& srcVersion, QString& destVersion)
         return false;
     }
 
-    QString destPath = QString::fromStdWString(CImPath::GetSoftInstallPath());
-    QFile destVersionFile(destPath + "version.txt");
-    if (!destVersionFile.exists())
-    {
-        return true;
-    }
-
     if (srcVersionFile.open(QIODevice::ReadOnly | QIODevice::Text))
     {
         QTextStream in(&srcVersionFile);
         srcVersion = in.readLine().trimmed();
         srcVersionFile.close();
+    }
+
+    qInfo("current version: %s", srcVersion.toStdString().c_str());
+
+    QString destPath = QString::fromStdWString(CImPath::GetSoftInstallPath());
+    QFile destVersionFile(destPath + "version.txt");
+    if (!destVersionFile.exists())
+    {
+        return true;
     }
 
     if (destVersionFile.open(QIODevice::ReadOnly | QIODevice::Text))
@@ -53,7 +55,7 @@ bool UpdateUtil::needUpgrade(QString& srcVersion, QString& destVersion)
         destVersionFile.close();
     }
 
-    qInfo("current version: %s, new version: %s", srcVersion.toStdString().c_str(), destVersion.toStdString().c_str());
+    qInfo("new version: %s", destVersion.toStdString().c_str());
 
     QStringList srcVersionParts = srcVersion.split('.');
     QStringList destVersionParts = destVersion.split('.');

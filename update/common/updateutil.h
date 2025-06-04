@@ -13,7 +13,7 @@ public:
     static bool startUpgradeProgram(QString upgradeProgramPath, const QStringList &arguments);
 
     // 检查是否需要更新
-    static bool needUpgrade(QString& currentVersion, QString& newVersion);
+    static bool needUpgrade(QString& newVersion, QString& currentVersion);
 };
 
 #endif // UPDATEUTIL_H

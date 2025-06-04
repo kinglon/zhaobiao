@@ -59,7 +59,7 @@ void UpdateThread::runInternal()
 
         QString currentVersion;
         QString newVersion;
-        bool needUpgrade = UpdateUtil::needUpgrade(currentVersion, newVersion);
+        bool needUpgrade = UpdateUtil::needUpgrade(newVersion, currentVersion);
         if (needUpgrade)
         {
             // 有新版本就先升级
@@ -263,8 +263,13 @@ void UpdateThread::doPull()
             }
             else if (output.contains("Fast-forward"))
             {
-                emit printLog(QString::fromWCharArray(L"新版本已更新"));
+                emit printLog(QString::fromWCharArray(L"新版本已更新到本地"));
                 return;
+            }
+            else
+            {
+                qCritical("failed to pull, error: %s", output.toStdString().c_str());
+                emit printLog(QString::fromWCharArray(L"拉取新版本失败"));
             }
         }
 

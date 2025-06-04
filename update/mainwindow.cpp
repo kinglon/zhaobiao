@@ -50,6 +50,12 @@ void MainWindow::onIpcDataArrive(QString data)
 {
     if (data.contains("showWindow"))
     {
-        setVisible(true);
+        show();
     }
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    hide();
+    event->ignore();
 }

@@ -223,7 +223,7 @@ void CollectThread::handleZhaoBiaoClientError(ZhaoBiaoHttpClient& client, ZhaoBi
         StatusManager::getInstance()->setCookies("");
         for (int i=0; i<60000000; i++)
         {
-            int interval = 15;
+            int interval = 60;
             if (SettingManager::getInstance()->m_debug)
             {
                 interval = 1000;
@@ -322,11 +322,11 @@ void CollectThread::doPriority(QVector<ZhaoBiao>& zhaoBiaos)
         if (SettingManager::getInstance()->m_regions.contains(zhaoBiao.m_province))
         {
             bool high = false;
-            if (zhaoBiao.m_content.contains(QString::fromWCharArray(L"矿山总承包施工")))
+            if (zhaoBiao.m_content.contains(QString::fromWCharArray(L"矿山总承包施工资质")))
             {
                 high = true;
             }
-            else if (zhaoBiao.m_content.contains(QString::fromWCharArray(L"矿山总承包施工二级"))
+            else if (zhaoBiao.m_content.contains(QString::fromWCharArray(L"矿山总承包施工二级资质"))
                     && zhaoBiao.m_content.contains(QString::fromWCharArray(L"爆破作业单位许可证")))
             {
                 high = true;
@@ -340,8 +340,8 @@ void CollectThread::doPriority(QVector<ZhaoBiao>& zhaoBiaos)
             }
         }
 
-        if (zhaoBiao.m_content.contains(QString::fromWCharArray(L"矿山总承包施工"))
-                || zhaoBiao.m_content.contains(QString::fromWCharArray(L"地质灾害防治工程施工")))
+        if (zhaoBiao.m_content.contains(QString::fromWCharArray(L"矿山总承包施工资质"))
+                || zhaoBiao.m_content.contains(QString::fromWCharArray(L"地质灾害防治工程施工资质")))
         {
             zhaoBiao.m_priorityLevel = ZhaoBiao::PRIORITY_LEVEL_MEDIUM;
             mediumCount += 1;
@@ -435,7 +435,7 @@ bool CollectThread::doDownload(ZhaoBiaoHttpClient& client, const QVector<ZhaoBia
 
     if (total == 0)
     {
-        emit printLog(QString::fromWCharArray(L"没有附件需要下载"));
+        emit printLog(QString::fromWCharArray(L"重要级项目没有附件需要下载"));
         return true;
     }
 
@@ -455,14 +455,17 @@ bool CollectThread::doDownload(ZhaoBiaoHttpClient& client, const QVector<ZhaoBia
             continue;
         }
 
-        for (const auto& attachment : zhaoBiao.m_attachments)
+        for (int i=0; i<zhaoBiao.m_attachments.length(); i++)
         {
             if (m_exit.load())
             {
                 return false;
             }
 
+            const auto& attachment = zhaoBiao.m_attachments[i];
+
             // 重试3次
+            bool ok = false;
             for (int i=0; i<3; i++)
             {
                 if (m_exit.load())
@@ -481,8 +484,14 @@ bool CollectThread::doDownload(ZhaoBiaoHttpClient& client, const QVector<ZhaoBia
                 {
                     count++;
                     emit printLog(QString::fromWCharArray(L"下载附件进度：%1/%2").arg(QString::number(count), QString::number(total)));
+                    ok = true;
                     break;
                 }
+            }
+
+            if (!ok)
+            {
+                emit printLog(QString::fromWCharArray(L"下载附件失败，项目：%1，第%2个附件").arg(zhaoBiao.m_title, QString::number(i+1)));
             }
         }
     }
