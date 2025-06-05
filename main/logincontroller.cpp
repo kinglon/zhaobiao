@@ -17,6 +17,7 @@ void LoginController::run()
     }
 
     m_running = true;
+    m_needFillUserName = true;
 
     connect(BrowserWindow::getInstance(), &BrowserWindow::runJsCodeFinished, this, &LoginController::onRunJsCodeFinished);
 
@@ -47,21 +48,35 @@ void LoginController::onTimer()
 {
     BrowserWindow::getInstance()->runJsCode("GetLoginInfo", JsCodeManager::getInstance()->m_getLoginInfo);
     qDebug("get login information");
+
+    if (m_needFillUserName)
+    {
+        QString jsCode = JsCodeManager::getInstance()->m_fillUserPassword;
+        jsCode.replace("$USERNAME", SettingManager::getInstance()->m_userName);
+        jsCode.replace("$PASSWORD", SettingManager::getInstance()->m_password);
+        BrowserWindow::getInstance()->runJsCode("fillUserPassword", jsCode);
+    }
 }
 
 void LoginController::onRunJsCodeFinished(const QString& id, const QVariant& result)
 {
-    if (id != "GetLoginInfo")
+    if (id == "GetLoginInfo")
     {
-        return;
+        QString cookies = result.toString();
+        if (!cookies.isEmpty())
+        {
+            qInfo("cookies: %s", cookies.toStdString().c_str());
+            StatusManager::getInstance()->setCookies(cookies);
+            emit printLog(QString::fromWCharArray(L"已登录"));
+            stop();
+        }
     }
-
-    QString cookies = result.toString();
-    if (!cookies.isEmpty())
+    else if (id == "fillUserPassword")
     {
-        qInfo("cookies: %s", cookies.toStdString().c_str());
-        StatusManager::getInstance()->setCookies(cookies);
-        emit printLog(QString::fromWCharArray(L"已登录"));
-        stop();
+        if (result.toInt() == 1)
+        {
+            qInfo("successful to fill username and password");
+            m_needFillUserName = false;
+        }
     }
 }

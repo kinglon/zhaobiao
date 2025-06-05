@@ -46,18 +46,18 @@ void CollectThread::runInternal()
     ZhaoBiaoHttpClient client;
     client.m_cookies = StatusManager::getInstance()->getCookies();
 
-    // 获取今天和三天前的日期
-    QDate currentDate = QDate::currentDate();
-    QString currentDateStr = currentDate.toString("yyyy-MM-dd");
-    QDate threeDaysAgo = currentDate.addDays(-3); // 减去 3 天
-    QString threeDaysAgoStr = threeDaysAgo.toString("yyyy-MM-dd");
+    QDate searchBeginDate = QDateTime::fromSecsSinceEpoch(SettingManager::getInstance()->m_searchBeginDate).date();
+    QString searchBeginDateStr = searchBeginDate.toString("yyyy-MM-dd");
+    QDate searchEndDate = QDateTime::fromSecsSinceEpoch(SettingManager::getInstance()->m_searchEndDate).date();
+    QString searchEndDateStr = searchEndDate.toString("yyyy-MM-dd");
+    qInfo("search date from %s to %s", searchBeginDateStr.toStdString().c_str(), searchEndDateStr.toStdString().c_str());
 
     // 按标题关键词搜索
     emit printLog(QString::fromWCharArray(L"按标题关键词搜索"));
 
     SearchCondition condition;
-    condition.m_beginDate = threeDaysAgoStr;
-    condition.m_endDate = currentDateStr;
+    condition.m_beginDate = searchBeginDateStr;
+    condition.m_endDate = searchEndDateStr;
     condition.m_onlyTitleField = true;
     condition.m_keyWord = StatusManager::getInstance()->getCurrentFilterKeyWord().m_titleKeyWord;
 

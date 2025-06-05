@@ -10,6 +10,7 @@
 SettingManager::SettingManager()
 {
     load();
+    loadConfig2();
     loadKeyWord();
     loadOtherKeyWord();
 }
@@ -47,6 +48,53 @@ void SettingManager::load()
     m_browserWidth = root["browser_width"].toInt();
     m_browserHeight = root["browser_height"].toInt();
     m_debug = root["debug"].toBool();
+}
+
+void SettingManager::loadConfig2()
+{
+    std::wstring strConfFilePath = CImPath::GetConfPath() + L"configs2.json";
+    QFile file(QString::fromStdWString(strConfFilePath));
+    if (!file.exists())
+    {
+        return;
+    }
+
+    if (!file.open(QIODevice::ReadOnly))
+    {
+        LOG_ERROR(L"failed to open the basic configure2 file : %s", strConfFilePath.c_str());
+        return;
+    }
+    QByteArray jsonData = file.readAll();
+    file.close();
+
+    QJsonDocument jsonDocument = QJsonDocument::fromJson(jsonData);
+    QJsonObject root = jsonDocument.object();
+
+    m_userName = root["userName"].toString();
+    m_password = root["password"].toString();
+    m_searchBeginDate = root["searchBeginDate"].toInt();
+    m_searchEndDate = root["searchEndDate"].toInt();
+}
+
+void SettingManager::save()
+{
+    QJsonObject root;
+    root["userName"] = m_userName;
+    root["password"] = m_password;
+    root["searchBeginDate"] = m_searchBeginDate;
+    root["searchEndDate"] = m_searchEndDate;
+
+    QJsonDocument jsonDocument(root);
+    QByteArray jsonData = jsonDocument.toJson(QJsonDocument::Indented);
+    std::wstring strConfFilePath = CImPath::GetConfPath() + L"configs2.json";
+    QFile file(QString::fromStdWString(strConfFilePath));
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+    {
+        qCritical("failed to save setting");
+        return;
+    }
+    file.write(jsonData);
+    file.close();
 }
 
 void SettingManager::loadKeyWord()

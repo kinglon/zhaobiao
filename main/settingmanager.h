@@ -26,8 +26,12 @@ protected:
 public:
     static SettingManager* getInstance();
 
+public:
+    void save();
+
 private:
     void load();
+    void loadConfig2();
     void loadKeyWord();
     void loadOtherKeyWord();
 
@@ -59,4 +63,12 @@ public:
 
     // 重要地区，用于判断重要级
     QStringList m_regions;
+
+    // 用户名密码
+    QString m_userName;
+    QString m_password;
+
+    // 搜索日期范围，时间戳
+    qint64 m_searchBeginDate = 0;
+    qint64 m_searchEndDate = 0;
 };

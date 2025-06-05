@@ -26,6 +26,8 @@ private slots:
 private:
     bool m_running = false;
 
+    bool m_needFillUserName = false;
+
     QTimer* m_timer = nullptr;
 };
 

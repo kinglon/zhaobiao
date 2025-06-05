@@ -42,6 +42,8 @@ private:
 
     void initController();
 
+    void saveSetting();
+
     void closeEvent(QCloseEvent *event) override;
 
 private:

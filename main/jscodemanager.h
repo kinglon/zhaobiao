@@ -17,6 +17,8 @@ private:
 public:
     QString m_getLoginInfo;
 
+    QString m_fillUserPassword;
+
     QString m_getDetailCookie;
 };
 

@@ -27,6 +27,14 @@ void JsCodeManager::load()
         getLoginInfoFile.close();
     }
 
+    QString fillUserPasswordFilePath = jsRootPath + "fillUserPassword.js";
+    QFile fillUserPasswordFile(fillUserPasswordFilePath);
+    if (fillUserPasswordFile.open(QIODevice::ReadOnly))
+    {
+        m_fillUserPassword = QString::fromUtf8(fillUserPasswordFile.readAll());
+        fillUserPasswordFile.close();
+    }
+
     QString getDetailCookieFilePath = jsRootPath + "getDetailCookie.js";
     QFile getDetailCookieFile(getDetailCookieFilePath);
     if (getDetailCookieFile.open(QIODevice::ReadOnly))

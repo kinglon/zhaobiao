@@ -42,6 +42,23 @@ void MainWindow::initCtrls()
     }
     ui->comboBoxKeyWord->setCurrentIndex(-1);
 
+    ui->lineEditUserName->setText(SettingManager::getInstance()->m_userName);
+    ui->lineEditPassword->setText(SettingManager::getInstance()->m_password);
+
+    QDateTime searchEndDate = QDateTime::currentDateTime();
+    if (SettingManager::getInstance()->m_searchEndDate > 0)
+    {
+        searchEndDate = QDateTime::fromSecsSinceEpoch(SettingManager::getInstance()->m_searchEndDate);
+    }
+    ui->dateEditSearchEnd->setDate(searchEndDate.date());
+
+    QDateTime searchBeginDate = searchEndDate.addDays(-3);
+    if (SettingManager::getInstance()->m_searchBeginDate > 0)
+    {
+        searchBeginDate = QDateTime::fromSecsSinceEpoch(SettingManager::getInstance()->m_searchBeginDate);
+    }
+    ui->dateEditSearchBegin->setDate(searchBeginDate.date());
+
     connect(ui->comboBoxKeyWord, &QComboBox::currentTextChanged, this, &MainWindow::onKeyWordComboCurrentTextChanged);
     connect(ui->pushButtonLogin, &QPushButton::clicked, this, &MainWindow::onLoginButtonClicked);
     connect(ui->pushButtonStart, &QPushButton::clicked, this, &MainWindow::onStartButtonClicked);
@@ -73,6 +90,15 @@ void MainWindow::initController()
     connect(&m_loginController, &LoginController::printLog, this, &MainWindow::onPrintLog);    
 }
 
+void MainWindow::saveSetting()
+{
+    SettingManager::getInstance()->m_userName = ui->lineEditUserName->text();
+    SettingManager::getInstance()->m_password = ui->lineEditPassword->text();
+    SettingManager::getInstance()->m_searchBeginDate = ui->dateEditSearchBegin->dateTime().toSecsSinceEpoch();
+    SettingManager::getInstance()->m_searchEndDate = ui->dateEditSearchEnd->dateTime().toSecsSinceEpoch();
+    SettingManager::getInstance()->save();
+}
+
 void MainWindow::onCtrlDShortcut()
 {
     ZhaoBiaoHttpClient::test();
@@ -97,6 +123,8 @@ void MainWindow::onPrintLog(QString content)
 
 void MainWindow::onLoginButtonClicked()
 {
+    saveSetting();
+
     BrowserWindow::getInstance()->load(QUrl(HOME_PAGE));
     BrowserWindow::getInstance()->showMaximized();
     m_loginController.run();
@@ -104,6 +132,8 @@ void MainWindow::onLoginButtonClicked()
 
 void MainWindow::onStartButtonClicked()
 {
+    saveSetting();
+
     // 检测是否有新版本
     QString currentVersion;
     QString newVersion;
