@@ -150,6 +150,7 @@ bool ZhaoBiaoHttpClient::handleSearchReply(QNetworkReply* reply, int& totalPage,
         ZhaoBiao zhaoBiao;
         zhaoBiao.m_id = dataJsonObject["docid"].toString();
         zhaoBiao.m_title = dataJsonObject["title"].toString();
+        zhaoBiao.m_publishDate = dataJsonObject["ipubtime"].toString();
         QString proName = dataJsonObject["proName"].toString();
         QStringList parts = proName.split(" ");
         if (parts.length() > 0)

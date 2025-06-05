@@ -40,6 +40,9 @@ public:
     // 标题
     QString m_title;
 
+    // 发布日期
+    QString m_publishDate;
+
     // 地点-省
     QString m_province;
 

@@ -52,26 +52,12 @@ void CollectThread::runInternal()
     QString searchEndDateStr = searchEndDate.toString("yyyy-MM-dd");
     qInfo("search date from %s to %s", searchBeginDateStr.toStdString().c_str(), searchEndDateStr.toStdString().c_str());
 
-    // 按标题关键词搜索
-    emit printLog(QString::fromWCharArray(L"按标题关键词搜索"));
+    // 按内容附件关键词搜索
+    emit printLog(QString::fromWCharArray(L"按内容附件关键词搜索"));
 
     SearchCondition condition;
     condition.m_beginDate = searchBeginDateStr;
     condition.m_endDate = searchEndDateStr;
-    condition.m_onlyTitleField = true;
-    condition.m_keyWord = StatusManager::getInstance()->getCurrentFilterKeyWord().m_titleKeyWord;
-
-    QVector<ZhaoBiao> zhaoBiaosByTitle;
-    if (!search(client, condition, zhaoBiaosByTitle))
-    {
-        return;
-    }
-
-    emit printLog(QString::fromWCharArray(L"按标题关键词搜索到%1条").arg(zhaoBiaosByTitle.length()));
-
-    // 按内容附件关键词搜索
-    emit printLog(QString::fromWCharArray(L"按内容附件关键词搜索"));
-
     condition.m_onlyTitleField = false;
     condition.m_keyWord = StatusManager::getInstance()->getCurrentFilterKeyWord().m_contentKeyWord;
 
@@ -81,23 +67,30 @@ void CollectThread::runInternal()
         return;
     }
 
-    emit printLog(QString::fromWCharArray(L"按内容附件关键词搜索到%1条").arg(zhaoBiaosByContent.length()));
+    emit printLog(QString::fromWCharArray(L"按内容附件关键词搜索到：%1条").arg(zhaoBiaosByContent.length()));
 
-    // 筛选既含标题关键词又含内容附件关键词的项目    
+    // 筛选含有标题关键词项目
+    QStringList titleKeywords = StatusManager::getInstance()->getCurrentFilterKeyWord().m_titleKeyWord.split(" ");
     QVector<ZhaoBiao> targetZhaoBiaos;
-    for (const auto& zhaoBiaoByTitle : zhaoBiaosByTitle)
+    for (const auto& zhaoBiaoByContent : zhaoBiaosByContent)
     {
-        for (const auto& zhaoBiaoByContent : zhaoBiaosByContent)
+        for (const auto& titleKeyWord : titleKeywords)
         {
-            if (zhaoBiaoByTitle.m_id == zhaoBiaoByContent.m_id)
+            if (zhaoBiaoByContent.m_title.contains(titleKeyWord))
             {
-                targetZhaoBiaos.append(zhaoBiaoByTitle);
+                targetZhaoBiaos.append(zhaoBiaoByContent);
                 break;
             }
         }
     }
 
-    emit printLog(QString::fromWCharArray(L"筛选既含标题关键词又含内容附件关键词：%1条").arg(targetZhaoBiaos.length()));
+    emit printLog(QString::fromWCharArray(L"筛选含有标题关键词项目：%1条").arg(targetZhaoBiaos.length()));
+
+    if (targetZhaoBiaos.length() == 0)
+    {
+        m_success = true;
+        return;
+    }
 
     // 获取项目详情
     emit printLog(QString::fromWCharArray(L"获取项目详情"));
@@ -392,7 +385,7 @@ bool CollectThread::doSave(const QVector<ZhaoBiao>& zhaoBiaos)
         int column = 1;
         xlsx.write(row, column++, QString::number(i+1));
         xlsx.write(row, column++, zhaoBiaos[i].m_title);
-        xlsx.write(row, column++, QString::number(zhaoBiaos[i].m_filterResult));
+        xlsx.write(row, column++, zhaoBiaos[i].m_publishDate);
         xlsx.write(row, column++, zhaoBiaos[i].getPriorityLevel());
         xlsx.write(row, column++, zhaoBiaos[i].m_province+zhaoBiaos[i].m_city);
         xlsx.write(row, column++, zhaoBiaos[i].m_link);

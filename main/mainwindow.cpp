@@ -9,8 +9,6 @@
 #include "uiutil.h"
 #include "update/common/updateutil.h"
 
-#define HOME_PAGE "https://www.zhaobiao.cn/"
-
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -123,10 +121,7 @@ void MainWindow::onPrintLog(QString content)
 
 void MainWindow::onLoginButtonClicked()
 {
-    saveSetting();
-
-    BrowserWindow::getInstance()->load(QUrl(HOME_PAGE));
-    BrowserWindow::getInstance()->showMaximized();
+    saveSetting();    
     m_loginController.run();
 }
 

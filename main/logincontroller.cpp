@@ -3,6 +3,8 @@
 #include "jscodemanager.h"
 #include "statusmanager.h"
 
+#define LOGIN_PAGE "https://user.zhaobiao.cn/login.html"
+
 LoginController::LoginController(QObject *parent)
     : QObject{parent}
 {
@@ -18,6 +20,9 @@ void LoginController::run()
 
     m_running = true;
     m_needFillUserName = true;
+
+    BrowserWindow::getInstance()->load(QUrl(LOGIN_PAGE));
+    BrowserWindow::getInstance()->showMaximized();
 
     connect(BrowserWindow::getInstance(), &BrowserWindow::runJsCodeFinished, this, &LoginController::onRunJsCodeFinished);
 
