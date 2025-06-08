@@ -33,13 +33,6 @@ MainWindow::~MainWindow()
 
 void MainWindow::initCtrls()
 {
-    ui->comboBoxKeyWord->clear();
-    for (const auto& keyWord : SettingManager::getInstance()->m_filterKeyWords)
-    {
-        ui->comboBoxKeyWord->addItem(keyWord.m_type);
-    }
-    ui->comboBoxKeyWord->setCurrentIndex(-1);
-
     ui->lineEditUserName->setText(SettingManager::getInstance()->m_userName);
     ui->lineEditPassword->setText(SettingManager::getInstance()->m_password);
 
@@ -57,7 +50,6 @@ void MainWindow::initCtrls()
     }
     ui->dateEditSearchBegin->setDate(searchBeginDate.date());
 
-    connect(ui->comboBoxKeyWord, &QComboBox::currentTextChanged, this, &MainWindow::onKeyWordComboCurrentTextChanged);
     connect(ui->pushButtonLogin, &QPushButton::clicked, this, &MainWindow::onLoginButtonClicked);
     connect(ui->pushButtonStart, &QPushButton::clicked, this, &MainWindow::onStartButtonClicked);
     connect(ui->pushButtonStop, &QPushButton::clicked, this, &MainWindow::onStopButtonClicked);
@@ -146,16 +138,34 @@ void MainWindow::onStartButtonClicked()
         return;
     }
 
-    FilterKeyWord filterKeyWord;
-    filterKeyWord.m_type = ui->comboBoxKeyWord->currentText();
-    filterKeyWord.m_titleKeyWord = ui->lineEditTitleKeyWord->text();
-    filterKeyWord.m_contentKeyWord = ui->lineEditContentKeyWord->text();
-    if (filterKeyWord.m_titleKeyWord.isEmpty() || filterKeyWord.m_contentKeyWord.isEmpty())
+    StatusManager::getInstance()->m_downloadAttachment = ui->checkBoxDownloadAttachment->isChecked();
+
+    // 获取搜索关键词列表
+    QCheckBox* keyWordCheckBoxes[4] = {
+        ui->checkBoxKuangShan, ui->checkBoxBaoPoShiGong,
+        ui->checkBoxBaoPoFuWu, ui->checkBoxDiZhiZaiHai
+    };
+    StatusManager::getInstance()->m_searchFilterKeyWords.clear();
+    for (int i=0; i<sizeof(keyWordCheckBoxes)/sizeof(keyWordCheckBoxes[0]); i++)
     {
-        UiUtil::showTip(QString::fromWCharArray(L"请先选择关键词"));
+        if (keyWordCheckBoxes[i]->isChecked())
+        {
+            QString type = keyWordCheckBoxes[i]->text();
+            for (const auto& keyWord : SettingManager::getInstance()->m_filterKeyWords)
+            {
+                if (type == keyWord.m_type)
+                {
+                    StatusManager::getInstance()->m_searchFilterKeyWords.append(keyWord);
+                    break;
+                }
+            }
+        }
+    }
+    if (StatusManager::getInstance()->m_searchFilterKeyWords.empty())
+    {
+        UiUtil::showTip(QString::fromWCharArray(L"请选择要采集的关键词"));
         return;
     }
-    StatusManager::getInstance()->setCurrentFilterKeyWord(filterKeyWord);
 
     m_collectController = new CollectController();
     connect(m_collectController, &CollectController::printLog, this, &MainWindow::onPrintLog);
@@ -185,21 +195,6 @@ void MainWindow::onStopButtonClicked()
 void MainWindow::onOpenFolderButtonClicked()
 {
     QDesktopServices::openUrl(QUrl::fromLocalFile(m_lastSavedPath));
-}
-
-void MainWindow::onKeyWordComboCurrentTextChanged(QString text)
-{
-    for (auto& keyWord : SettingManager::getInstance()->m_filterKeyWords)
-    {
-        if (keyWord.m_type == text)
-        {
-            ui->lineEditTitleKeyWord->setText(keyWord.m_titleKeyWord);
-            ui->lineEditTitleKeyWord->setCursorPosition(0);
-            ui->lineEditContentKeyWord->setText(keyWord.m_contentKeyWord);
-            ui->lineEditContentKeyWord->setCursorPosition(0);
-            break;
-        }
-    }
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)

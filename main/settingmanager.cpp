@@ -125,7 +125,7 @@ void SettingManager::loadKeyWord()
         // 按分隔符'/'分割行
         QStringList parts = line.split('/', Qt::SkipEmptyParts);
 
-        // 确保有3部分：类型、标题或内容附件、关键词
+        // 确保有3部分：类型、标题/内容附件/资质、关键词
         if (parts.size() != 3)
             continue;
 
@@ -152,6 +152,8 @@ void SettingManager::loadKeyWord()
                 newKw.m_titleKeyWord = keyword;
             else if (category == QString::fromWCharArray(L"内容附件"))
                 newKw.m_contentKeyWord = keyword;
+            else if (category == QString::fromWCharArray(L"资质"))
+                newKw.m_ziZhiKeyWord = keyword;
             m_filterKeyWords.append(newKw);
         }
         else
@@ -160,6 +162,8 @@ void SettingManager::loadKeyWord()
                 existing->m_titleKeyWord = keyword;
             else if (category == QString::fromWCharArray(L"内容附件"))
                 existing->m_contentKeyWord = keyword;
+            else if (category == QString::fromWCharArray(L"资质"))
+                existing->m_ziZhiKeyWord = keyword;
         }
     }
 

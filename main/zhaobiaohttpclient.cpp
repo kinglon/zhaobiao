@@ -24,10 +24,11 @@ bool ZhaoBiaoHttpClient::search(const SearchCondition& condition, int& totalPage
     request.setRawHeader("Content-Type", "application/x-www-form-urlencoded");
     request.setRawHeader("X-Requested-With", "XMLHttpRequest");
 
-    QString body = "searchtype=sj&provinces=&leftday=&pstate=&channels=bidding%2Cfore%2Cchange%2Csucceed%2Cpurchase&attachment=1&searchModel=&associateModel=&correlation=&eliminate=";
+    QString body = "searchtype=sj&provinces=&leftday=&pstate=&attachment=1&searchModel=&associateModel=&correlation=&eliminate=";
     body += QString("&currentpage=%1").arg(condition.m_page);
     QString keyWordEncode = QUrl::toPercentEncoding(condition.m_keyWord);
     body += QString("&queryword=%1").arg(keyWordEncode);
+    body += QString("&channels=%1").arg(condition.m_channels);
     body += QString("&starttime=%1&endtime=%2").arg(condition.m_beginDate, condition.m_endDate);
     if (condition.m_onlyTitleField)
     {

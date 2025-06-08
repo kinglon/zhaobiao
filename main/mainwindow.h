@@ -31,8 +31,6 @@ private slots:
 
     void onOpenFolderButtonClicked();
 
-    void onKeyWordComboCurrentTextChanged(QString text);
-
 private:
     void initCtrls();
 

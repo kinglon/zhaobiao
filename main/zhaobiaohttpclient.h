@@ -17,6 +17,9 @@ public:
     // 关键词
     QString m_keyWord;
 
+    // 信息类别，如：bidding%2Cfore%2Cchange%2Csucceed%2Cpurchase
+    QString m_channels;
+
     // 开始日期，如：2025-05-27
     QString m_beginDate;
 

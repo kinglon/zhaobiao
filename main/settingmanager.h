@@ -16,6 +16,9 @@ public:
 
     // 内容/附件关键词
     QString m_contentKeyWord;
+
+    // 资质关键词
+    QString m_ziZhiKeyWord;
 };
 
 class SettingManager

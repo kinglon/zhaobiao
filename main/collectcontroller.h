@@ -7,17 +7,19 @@
 #include "zhaobiaohttpclient.h"
 #include "datamodel.h"
 
+// 采集线程基类
 class CollectThread: public QThread
 {
     Q_OBJECT
 
 public:
-    explicit CollectThread(QObject *parent = nullptr);
+    explicit CollectThread(QObject *parent = nullptr);    
 
+protected:
     void run() override;
 
-private:
-    void runInternal();
+    // 实现采集流程
+    virtual void runInternal() = 0;
 
     bool search(ZhaoBiaoHttpClient& client, SearchCondition condition, QVector<ZhaoBiao>& zhaoBiaos);
 
@@ -26,12 +28,9 @@ private:
 
     void handleZhaoBiaoClientError(ZhaoBiaoHttpClient& client, ZhaoBiao* currentZhaoBiao);
 
-    bool doGetDetail(ZhaoBiaoHttpClient& client, QVector<ZhaoBiao>& zhaoBiaos);
+    bool doGetDetail(ZhaoBiaoHttpClient& client, QVector<ZhaoBiao>& zhaoBiaos);    
 
-    // 对项目重要性进行分类
-    void doPriority(QVector<ZhaoBiao>& zhaoBiaos);
-
-    bool doSave(const QVector<ZhaoBiao>& zhaoBiaos);
+    bool doSave(QString excelFilePath, const QVector<ZhaoBiao>& zhaoBiaos);
 
     // 下载附件
     bool doDownload(ZhaoBiaoHttpClient& client, const QVector<ZhaoBiao>& zhaoBiaos);
@@ -47,8 +46,32 @@ public:
 
     bool m_success = false;
 
-    // 采集数据保存的目录
+    // 采集数据保存的目录，尾部不带有后划线
     QString m_savedPath;
+};
+
+// 矿山类的采集流程
+class KuangShanCollectThread : public CollectThread
+{
+    Q_OBJECT
+
+protected:
+    virtual void runInternal() override;
+
+private:
+    bool doSave(const QVector<ZhaoBiao>& zhaoBiaos);
+};
+
+// 爆破服务类的采集流程
+class BaoPoFuWuCollectThread : public CollectThread
+{
+    Q_OBJECT
+
+protected:
+    virtual void runInternal() override;
+
+private:
+    bool doSave(const QVector<ZhaoBiao>& zhaoBiaos);
 };
 
 class CollectController : public QObject
@@ -75,9 +98,27 @@ private slots:
     void onRunJsCodeFinished(const QString& id, const QVariant& result);
 
 private:
+    void doCollectNextKeyWords();
+
+    void doFinish(bool success);
+
+private:
+    // 标志是否正在运行
+    bool m_running = false;
+
+    // 标志是否请求退出
+    bool m_requestStop = false;
+
+    // 当前采集的线程
     CollectThread* m_collectThread = nullptr;
 
     QTimer* m_updateCookieTimer = nullptr;
+
+    // 采集结果保存根路径，尾部没有后划线
+    QString m_savedRootPath;
+
+    // 下一个采集的关键词索引
+    int m_nextKeyWordIndex = 0;
 };
 
 #endif // COLLECTCONTROLLER_H
