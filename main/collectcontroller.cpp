@@ -174,12 +174,13 @@ bool CollectThread::doGetDetail(ZhaoBiaoHttpClient& client, QVector<ZhaoBiao>& z
     {
         if (zhaoBiao.m_priorityLevel == ZhaoBiao::PRIORITY_LEVEL_HIGH)
         {
-            total += zhaoBiao.m_attachments.length();
+            total += 1;
         }
     }
 
     if (total == 0)
     {
+        emit printLog(QString::fromWCharArray(L"没有重要项目的详情需要获取"));
         return true;
     }
 
@@ -226,7 +227,7 @@ bool CollectThread::doGetDetail(ZhaoBiaoHttpClient& client, QVector<ZhaoBiao>& z
             }
         }
 
-        emit printLog(QString::fromWCharArray(L"获取重要项目的详情：%1/%2").arg(QString::number(i+1), QString::number(zhaoBiaos.length())));
+        emit printLog(QString::fromWCharArray(L"获取重要项目的详情：%1/%2").arg(QString::number(i+1), QString::number(total)));
     }
 
     return true;
@@ -409,6 +410,13 @@ void BaoPoFuWuCollectThread::runInternal()
         return;
     }
 
+    if (!StatusManager::getInstance()->m_downloadAttachment)
+    {
+        emit printLog(QString::fromWCharArray(L"未开启下载附件"));
+        m_success = true;
+        return;
+    }
+
     // 获取重要项目的详情
     emit printLog(QString::fromWCharArray(L"获取重要项目的详情"));
     if (!doGetDetail(client, targetZhaoBiaos))
@@ -584,6 +592,13 @@ void KuangShanCollectThread::runInternal()
         return;
     }
 
+    if (!StatusManager::getInstance()->m_downloadAttachment)
+    {
+        emit printLog(QString::fromWCharArray(L"未开启下载附件"));
+        m_success = true;
+        return;
+    }
+
     // 获取重要项目的详情
     emit printLog(QString::fromWCharArray(L"获取重要项目的详情"));
     if (!doGetDetail(client, targetZhaoBiaos))
@@ -668,8 +683,8 @@ void CollectController::run()
 
     // 获取保存根目录
     m_savedRootPath = QString::fromStdWString(CImPath::GetDataPath() + L"collect\\");
-    QString beginDateString = QDateTime::fromSecsSinceEpoch(SettingManager::getInstance()->m_searchBeginDate).toString(QString::fromWCharArray(L"yyyy年YY月dd日"));
-    QString endDateString = QDateTime::fromSecsSinceEpoch(SettingManager::getInstance()->m_searchEndDate).toString(QString::fromWCharArray(L"yyyy年YY月dd日"));
+    QString beginDateString = QDateTime::fromSecsSinceEpoch(SettingManager::getInstance()->m_searchBeginDate).toString(QString::fromWCharArray(L"yyyy年MM月dd日"));
+    QString endDateString = QDateTime::fromSecsSinceEpoch(SettingManager::getInstance()->m_searchEndDate).toString(QString::fromWCharArray(L"yyyy年MM月dd日"));
     QString folderName = beginDateString+"-"+endDateString;
     if (!QDir(m_savedRootPath+folderName).exists())
     {
@@ -762,6 +777,8 @@ void CollectController::doCollectNextKeyWords()
     connect(m_collectThread, &CollectThread::printLog, this, &CollectController::printLog);
     connect(m_collectThread, &CollectThread::updateCookie, this, &CollectController::onUpdateCookie);
     connect(m_collectThread, &CollectThread::finished, this, &CollectController::onThreadFinish);
+
+    emit printLog(QString::fromWCharArray(L"开始采集%1类别的项目").arg(currentType));
     m_collectThread->start();
 }
 
