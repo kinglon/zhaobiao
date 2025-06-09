@@ -14,6 +14,9 @@ public:
     // 标题关键词
     QString m_titleKeyWord;
 
+    // 标题不含关键词
+    QString m_titleExcludeKeyWord;
+
     // 内容/附件关键词
     QString m_contentKeyWord;
 
@@ -36,7 +39,6 @@ private:
     void load();
     void loadConfig2();
     void loadKeyWord();
-    void loadOtherKeyWord();
 
 public:
     // 日志级别，默认info
@@ -65,7 +67,7 @@ public:
     QStringList m_excludeKeyWords;
 
     // 重要地区，用于判断重要级
-    QStringList m_regions;
+    QString m_priorityRegions;
 
     // 用户名密码
     QString m_userName;

@@ -12,7 +12,6 @@ SettingManager::SettingManager()
     load();
     loadConfig2();
     loadKeyWord();
-    loadOtherKeyWord();
 }
 
 SettingManager* SettingManager::getInstance()
@@ -48,7 +47,6 @@ void SettingManager::load()
     m_browserWidth = root["browser_width"].toInt();
     m_browserHeight = root["browser_height"].toInt();
     m_debug = root["debug"].toBool();
-    m_searchProvince = root["search_province"].toString();
 }
 
 void SettingManager::loadConfig2()
@@ -74,7 +72,9 @@ void SettingManager::loadConfig2()
     m_userName = root["userName"].toString();
     m_password = root["password"].toString();
     m_searchBeginDate = root["searchBeginDate"].toInt();
-    m_searchEndDate = root["searchEndDate"].toInt();
+    m_searchEndDate = root["searchEndDate"].toInt();    
+    m_searchProvince = root["searchProvince"].toString();
+    m_priorityRegions = root["priorityRegions"].toString();
 }
 
 void SettingManager::save()
@@ -84,6 +84,8 @@ void SettingManager::save()
     root["password"] = m_password;
     root["searchBeginDate"] = m_searchBeginDate;
     root["searchEndDate"] = m_searchEndDate;
+    root["searchProvince"] = m_searchProvince;
+    root["priorityRegions"] = m_priorityRegions;
 
     QJsonDocument jsonDocument(root);
     QByteArray jsonData = jsonDocument.toJson(QJsonDocument::Indented);
@@ -126,7 +128,7 @@ void SettingManager::loadKeyWord()
         // 按分隔符'/'分割行
         QStringList parts = line.split('/', Qt::SkipEmptyParts);
 
-        // 确保有3部分：类型、标题/内容附件/资质、关键词
+        // 确保有3部分：类型、标题/标题不含/内容附件/资质、关键词
         if (parts.size() != 3)
             continue;
 
@@ -151,6 +153,8 @@ void SettingManager::loadKeyWord()
             newKw.m_type = type;
             if (category == QString::fromWCharArray(L"标题"))
                 newKw.m_titleKeyWord = keyword;
+            else if (category == QString::fromWCharArray(L"标题不含"))
+                newKw.m_titleExcludeKeyWord = keyword;
             else if (category == QString::fromWCharArray(L"内容附件"))
                 newKw.m_contentKeyWord = keyword;
             else if (category == QString::fromWCharArray(L"资质"))
@@ -161,57 +165,12 @@ void SettingManager::loadKeyWord()
         {
             if (category == QString::fromWCharArray(L"标题"))
                 existing->m_titleKeyWord = keyword;
+            else if (category == QString::fromWCharArray(L"标题不含"))
+                existing->m_titleExcludeKeyWord = keyword;
             else if (category == QString::fromWCharArray(L"内容附件"))
                 existing->m_contentKeyWord = keyword;
             else if (category == QString::fromWCharArray(L"资质"))
                 existing->m_ziZhiKeyWord = keyword;
-        }
-    }
-
-    file.close();
-}
-
-void SettingManager::loadOtherKeyWord()
-{
-    std::wstring strConfFilePath = CImPath::GetConfPath() + L"其它关键词.txt";
-    QFile file(QString::fromStdWString(strConfFilePath));
-    if (!file.exists())
-    {
-        return;
-    }
-
-    if (!file.open(QIODevice::ReadOnly))
-    {
-        LOG_ERROR(L"failed to open the keyword configure file : %s", strConfFilePath.c_str());
-        return;
-    }
-
-    QTextStream in(&file);
-    in.setCodec("UTF-8");
-    while (!in.atEnd())
-    {
-        QString line = in.readLine().trimmed();
-
-        // 跳过空行和注释行
-        if (line.isEmpty() || line.startsWith('#'))
-            continue;
-
-        // 按分隔符'='分割行
-        QStringList parts = line.split('=', Qt::SkipEmptyParts);
-
-        // 确保有2部分
-        if (parts.size() != 2)
-            continue;
-
-        QString type = parts[0].trimmed();
-        QString keyword = parts[1].trimmed();
-        if (type == QString::fromWCharArray(L"排除关键词"))
-        {
-            m_excludeKeyWords = keyword.split(" ");
-        }
-        else if (type == QString::fromWCharArray(L"重要地区"))
-        {
-            m_regions = keyword.split(" ");
         }
     }
 

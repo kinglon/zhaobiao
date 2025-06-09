@@ -35,6 +35,8 @@ void MainWindow::initCtrls()
 {
     ui->lineEditUserName->setText(SettingManager::getInstance()->m_userName);
     ui->lineEditPassword->setText(SettingManager::getInstance()->m_password);
+    ui->lineEditSearchProvince->setText(SettingManager::getInstance()->m_searchProvince);
+    ui->lineEditPriorityProvince->setText(SettingManager::getInstance()->m_priorityRegions);
 
     QDateTime searchEndDate = QDateTime::currentDateTime();
     if (SettingManager::getInstance()->m_searchEndDate > 0)
@@ -84,6 +86,8 @@ void MainWindow::saveSetting()
 {
     SettingManager::getInstance()->m_userName = ui->lineEditUserName->text();
     SettingManager::getInstance()->m_password = ui->lineEditPassword->text();
+    SettingManager::getInstance()->m_searchProvince = ui->lineEditSearchProvince->text();
+    SettingManager::getInstance()->m_priorityRegions = ui->lineEditPriorityProvince->text();
     SettingManager::getInstance()->m_searchBeginDate = ui->dateEditSearchBegin->dateTime().toSecsSinceEpoch();
     SettingManager::getInstance()->m_searchEndDate = ui->dateEditSearchEnd->dateTime().toSecsSinceEpoch();
     SettingManager::getInstance()->save();

@@ -371,7 +371,7 @@ void BaoPoFuWuCollectThread::runInternal()
     condition.m_onlyTitleField = false;
     condition.m_province = SettingManager::getInstance()->m_searchProvince;
     condition.m_keyWord = StatusManager::getInstance()->m_currentFilterKeyWord.m_contentKeyWord;
-    condition.m_channels = "bidding%2Cfore%2Cpurchase%2Cfree%2Crecommend%2Cproposed%2Centrust%2Capproved";
+    condition.m_channels = "bidding%2Cfore%2Cpurchase%2Cfree%2Crecommend%2Cproposed%2Centrust%2Capproved%2Ccommerce%2Clisted%2Cproperty%2Cmineral%2Cland%2Cauction%2Cother";
 
     QVector<ZhaoBiao> zhaoBiaosByContent;
     if (!search(client, condition, zhaoBiaosByContent))
@@ -397,6 +397,33 @@ void BaoPoFuWuCollectThread::runInternal()
     }
 
     emit printLog(QString::fromWCharArray(L"筛选含有标题关键词项目：%1条").arg(targetZhaoBiaos.length()));
+
+    // 筛选掉标题不含关键词项目
+    QString excludeKeyWord = StatusManager::getInstance()->m_currentFilterKeyWord.m_titleExcludeKeyWord;
+    if (!excludeKeyWord.isEmpty())
+    {
+        QStringList excludeTitleKeywords = excludeKeyWord.split(" ");
+        QVector<ZhaoBiao> targetZhaoBiaos2;
+        for (const auto& zhaoBiao : targetZhaoBiaos)
+        {
+            bool found = false;
+            for (const auto& keyWord : excludeTitleKeywords)
+            {
+                if (zhaoBiao.m_title.contains(keyWord))
+                {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found)
+            {
+                targetZhaoBiaos2.append(zhaoBiao);
+            }
+        }
+
+        targetZhaoBiaos = targetZhaoBiaos2;
+        emit printLog(QString::fromWCharArray(L"筛选掉标题不含关键词项目后剩余：%1条").arg(targetZhaoBiaos.length()));
+    }
 
     if (targetZhaoBiaos.length() == 0)
     {
@@ -502,7 +529,7 @@ void KuangShanCollectThread::runInternal()
     condition.m_onlyTitleField = false;
     condition.m_province = SettingManager::getInstance()->m_searchProvince;
     condition.m_keyWord = StatusManager::getInstance()->m_currentFilterKeyWord.m_contentKeyWord;
-    condition.m_channels = "bidding%2Cfore%2Cpurchase%2Cfree%2Crecommend%2Cproposed%2Centrust%2Capproved";
+    condition.m_channels = "bidding%2Cfore%2Cpurchase%2Cfree%2Crecommend%2Cproposed%2Centrust%2Capproved%2Ccommerce%2Clisted%2Cproperty%2Cmineral%2Cland%2Cauction%2Cother";
 
     QVector<ZhaoBiao> zhaoBiaosByContent;
     if (!search(client, condition, zhaoBiaosByContent))
@@ -528,6 +555,33 @@ void KuangShanCollectThread::runInternal()
     }
 
     emit printLog(QString::fromWCharArray(L"筛选含有标题关键词项目：%1条").arg(targetZhaoBiaos.length()));
+
+    // 筛选掉标题不含关键词项目
+    QString excludeKeyWord = StatusManager::getInstance()->m_currentFilterKeyWord.m_titleExcludeKeyWord;
+    if (!excludeKeyWord.isEmpty())
+    {
+        QStringList excludeTitleKeywords = excludeKeyWord.split(" ");
+        QVector<ZhaoBiao> targetZhaoBiaos2;
+        for (const auto& zhaoBiao : targetZhaoBiaos)
+        {
+            bool found = false;
+            for (const auto& keyWord : excludeTitleKeywords)
+            {
+                if (zhaoBiao.m_title.contains(keyWord))
+                {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found)
+            {
+                targetZhaoBiaos2.append(zhaoBiao);
+            }
+        }
+
+        targetZhaoBiaos = targetZhaoBiaos2;
+        emit printLog(QString::fromWCharArray(L"筛选掉标题不含关键词项目后剩余：%1条").arg(targetZhaoBiaos.length()));
+    }
 
     if (targetZhaoBiaos.length() == 0)
     {
@@ -555,22 +609,31 @@ void KuangShanCollectThread::runInternal()
         emit printLog(QString::fromWCharArray(L"按资质关键词搜索：%1条").arg(zhaoBiaosByZhiZhi.length()));
     }
 
-    // 所属地区为浙江判定为重要
-    int count = 0;
-    for (auto& zhaoBiao : targetZhaoBiaos)
+    // 所属地区在设置的重要省份列表内判定为重要
+    if (!SettingManager::getInstance()->m_priorityRegions.isEmpty())
     {
-        if (zhaoBiao.m_province == QString::fromWCharArray(L"浙江"))
+        QStringList provinces = SettingManager::getInstance()->m_priorityRegions.split(" ");
+
+        int count = 0;
+        for (auto& zhaoBiao : targetZhaoBiaos)
         {
-            zhaoBiao.m_priorityLevel = ZhaoBiao::PRIORITY_LEVEL_HIGH;
-            count++;
+            for (const auto& province : provinces)
+            {
+                if (zhaoBiao.m_province == province)
+                {
+                    zhaoBiao.m_priorityLevel = ZhaoBiao::PRIORITY_LEVEL_HIGH;
+                    count++;
+                    break;
+                }
+            }
         }
+        emit printLog(QString::fromWCharArray(L"所属地区在设置的重要省份列表内判定为重要：%1条").arg(count));
     }
-    emit printLog(QString::fromWCharArray(L"所属地区为浙江判定为重要：%1条").arg(count));
 
     // 含有资质关键词判定为重要
     if (!zhaoBiaosByZhiZhi.isEmpty())
     {
-        count = 0;
+        int count = 0;
         for (auto& targetZhaoBiao : targetZhaoBiaos)
         {
             for (const auto& ziZhiZhaoBiao : zhaoBiaosByZhiZhi)
