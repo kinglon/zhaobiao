@@ -29,6 +29,7 @@ bool ZhaoBiaoHttpClient::search(const SearchCondition& condition, int& totalPage
     QString keyWordEncode = QUrl::toPercentEncoding(condition.m_keyWord);
     body += QString("&queryword=%1").arg(keyWordEncode);
     body += QString("&channels=%1").arg(condition.m_channels);
+    body += QString("&provinces=%1").arg(condition.m_province);
     body += QString("&starttime=%1&endtime=%2").arg(condition.m_beginDate, condition.m_endDate);
     if (condition.m_onlyTitleField)
     {

@@ -369,8 +369,9 @@ void BaoPoFuWuCollectThread::runInternal()
     condition.m_beginDate = searchBeginDateStr;
     condition.m_endDate = searchEndDateStr;
     condition.m_onlyTitleField = false;
+    condition.m_province = SettingManager::getInstance()->m_searchProvince;
     condition.m_keyWord = StatusManager::getInstance()->m_currentFilterKeyWord.m_contentKeyWord;
-    condition.m_channels = "bidding%2Cfore%2Cproposed%2Cpurchase";
+    condition.m_channels = "bidding%2Cfore%2Cpurchase%2Cfree%2Crecommend%2Cproposed%2Centrust%2Capproved";
 
     QVector<ZhaoBiao> zhaoBiaosByContent;
     if (!search(client, condition, zhaoBiaosByContent))
@@ -499,8 +500,9 @@ void KuangShanCollectThread::runInternal()
     condition.m_beginDate = searchBeginDateStr;
     condition.m_endDate = searchEndDateStr;
     condition.m_onlyTitleField = false;
+    condition.m_province = SettingManager::getInstance()->m_searchProvince;
     condition.m_keyWord = StatusManager::getInstance()->m_currentFilterKeyWord.m_contentKeyWord;
-    condition.m_channels = "bidding%2Cfore%2Cchange%2Csucceed%2Cpurchase%2Cfree%2Crecommend%2Cproposed";
+    condition.m_channels = "bidding%2Cfore%2Cpurchase%2Cfree%2Crecommend%2Cproposed%2Centrust%2Capproved";
 
     QVector<ZhaoBiao> zhaoBiaosByContent;
     if (!search(client, condition, zhaoBiaosByContent))
@@ -537,7 +539,7 @@ void KuangShanCollectThread::runInternal()
     emit printLog(QString::fromWCharArray(L"按资质关键词搜索"));
 
     QVector<ZhaoBiao> zhaoBiaosByZhiZhi;
-    QString ziZhiKeyWord = StatusManager::getInstance()->m_currentFilterKeyWord.m_contentKeyWord;
+    QString ziZhiKeyWord = StatusManager::getInstance()->m_currentFilterKeyWord.m_ziZhiKeyWord;
     if (ziZhiKeyWord.isEmpty())
     {
         emit printLog(QString::fromWCharArray(L"没有配置资质，无需搜索"));
@@ -545,7 +547,6 @@ void KuangShanCollectThread::runInternal()
     else
     {
         condition.m_keyWord = ziZhiKeyWord;
-        condition.m_channels = "bidding%2Cfore";
         if (!search(client, condition, zhaoBiaosByZhiZhi))
         {
             return;
@@ -615,17 +616,12 @@ void KuangShanCollectThread::runInternal()
 
 bool KuangShanCollectThread::doSave(const QVector<ZhaoBiao>& zhaoBiaos)
 {
-    // 分成3个表格保存：重要、一般、(变更、成交、中标等)
-    const int TYPE_COUNT = 3;
+    // 分成2个表格保存：重要、一般
+    const int TYPE_COUNT = 2;
     static QString names[TYPE_COUNT] = {
         QString::fromWCharArray(L"重要"),
-        QString::fromWCharArray(L"一般"),
-        QString::fromWCharArray(L"变更、成交、中标等")
+        QString::fromWCharArray(L"一般")
     };
-
-    static QString bianGeng = QString::fromWCharArray(L"变更");
-    static QString chengJiao = QString::fromWCharArray(L"成交");
-    static QString zhongBiao = QString::fromWCharArray(L"中标");
 
     QVector<ZhaoBiao> filterZhaoBiaos[TYPE_COUNT];
     for (const auto& zhaoBiao : zhaoBiaos)
@@ -633,12 +629,6 @@ bool KuangShanCollectThread::doSave(const QVector<ZhaoBiao>& zhaoBiaos)
         if (zhaoBiao.m_priorityLevel == ZhaoBiao::PRIORITY_LEVEL_HIGH)
         {
             filterZhaoBiaos[0].append(zhaoBiao);
-        }
-        else if (zhaoBiao.m_title.contains(bianGeng)
-                 || zhaoBiao.m_title.contains(chengJiao)
-                 || zhaoBiao.m_title.contains(zhongBiao))
-        {
-            filterZhaoBiaos[2].append(zhaoBiao);
         }
         else
         {
@@ -710,6 +700,16 @@ void CollectController::run()
     }
 
     connect(BrowserWindow::getInstance(), &BrowserWindow::runJsCodeFinished, this, &CollectController::onRunJsCodeFinished);
+
+    if (SettingManager::getInstance()->m_searchProvince.isEmpty())
+    {
+        emit printLog(QString::fromWCharArray(L"搜索省份：全国"));
+    }
+    else
+    {
+        emit printLog(QString::fromWCharArray(L"搜索省份：%1").arg(SettingManager::getInstance()->m_searchProvince));
+    }
+
     doCollectNextKeyWords();
     m_running = true;
 }

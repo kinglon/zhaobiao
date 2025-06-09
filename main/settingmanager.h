@@ -74,4 +74,7 @@ public:
     // 搜索日期范围，时间戳
     qint64 m_searchBeginDate = 0;
     qint64 m_searchEndDate = 0;
+
+    // 搜索省份代号，空表示全国
+    QString m_searchProvince;
 };

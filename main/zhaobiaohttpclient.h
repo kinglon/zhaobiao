@@ -25,6 +25,9 @@ public:
 
     // 结束日期，如：2025-05-27
     QString m_endDate;
+
+    // 省份，空表示全国
+    QString m_province;
 };
 
 class ZhaoBiaoHttpClient : public SyncHttpClient
