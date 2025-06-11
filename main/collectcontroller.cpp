@@ -488,12 +488,13 @@ bool BaoPoFuWuCollectThread::doSave(const QVector<ZhaoBiao>& zhaoBiaos)
         }
     }
 
+    QString currentType = StatusManager::getInstance()->m_currentFilterKeyWord.m_type;
     for (int i=0; i<TYPE_COUNT; i++)
     {
         // 拷贝表格模板到保存目录
         QString excelFileName = QString::fromWCharArray(L"输出表格模板.xlsx");
         QString srcExcelFilePath = QString::fromStdWString(CImPath::GetConfPath()) + excelFileName;
-        QString destExcelFilePath = m_savedPath+"\\"+names[i]+".xlsx";
+        QString destExcelFilePath = m_savedPath+"\\"+currentType+names[i]+".xlsx";
         if (!::CopyFile(srcExcelFilePath.toStdWString().c_str(), destExcelFilePath.toStdWString().c_str(), TRUE))
         {
             emit printLog(QString::fromWCharArray(L"拷贝表格模板到保存目录失败"));
@@ -699,12 +700,13 @@ bool KuangShanCollectThread::doSave(const QVector<ZhaoBiao>& zhaoBiaos)
         }
     }
 
+    QString currentType = StatusManager::getInstance()->m_currentFilterKeyWord.m_type;
     for (int i=0; i<TYPE_COUNT; i++)
     {
         // 拷贝表格模板到保存目录
         QString excelFileName = QString::fromWCharArray(L"输出表格模板.xlsx");
         QString srcExcelFilePath = QString::fromStdWString(CImPath::GetConfPath()) + excelFileName;
-        QString destExcelFilePath = m_savedPath+"\\"+names[i]+".xlsx";
+        QString destExcelFilePath = m_savedPath+"\\"+currentType+names[i]+".xlsx";
         if (!::CopyFile(srcExcelFilePath.toStdWString().c_str(), destExcelFilePath.toStdWString().c_str(), TRUE))
         {
             emit printLog(QString::fromWCharArray(L"拷贝表格模板到保存目录失败"));
