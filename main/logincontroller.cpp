@@ -2,6 +2,7 @@
 #include "browserwindow.h"
 #include "jscodemanager.h"
 #include "statusmanager.h"
+#include "zhaobiaohttpclient.h"
 
 #define LOGIN_PAGE "https://user.zhaobiao.cn/login.html"
 
@@ -49,6 +50,47 @@ void LoginController::stop()
     }
 }
 
+void LoginController::startRefreshLoginInfo()
+{
+    if (m_refreshTimer)
+    {
+        return;
+    }
+
+    m_refreshTimer = new QTimer(this);
+    connect(m_refreshTimer, &QTimer::timeout, [this]() {
+        static qint64 lastRefreshTime = QDateTime::currentSecsSinceEpoch();
+        qint64 now = QDateTime::currentSecsSinceEpoch();
+        if (now - lastRefreshTime >= 1800)
+        {
+            // 检索一次，登录就不会过期
+            emit printLog(QString::fromWCharArray(L"开始检索保持登录在线"));
+
+            ZhaoBiaoHttpClient client;
+            client.m_cookies = StatusManager::getInstance()->getCookies();
+
+            QDate today = QDate::currentDate();
+            SearchCondition condition;
+            condition.m_beginDate = today.toString("yyyy-MM-dd");
+            condition.m_endDate = condition.m_beginDate;
+            condition.m_onlyTitleField = false;
+            condition.m_province = SettingManager::getInstance()->m_searchProvince;
+            condition.m_keyWord = QString::fromWCharArray(L"矿山");
+            condition.m_channels = "bidding%2Cfore%2Cpurchase%2Cfree%2Crecommend%2Cproposed%2Centrust%2Capproved%2Ccommerce%2Clisted%2Cproperty%2Cmineral%2Cland%2Cauction%2Cother";
+            condition.m_page = 1;
+
+            QVector<ZhaoBiao> zhaoBiaos;
+            int totalPage = 0;
+            if (!client.search(condition, totalPage, zhaoBiaos))
+            {
+                emit printLog(client.m_lastError);
+            }
+            lastRefreshTime = QDateTime::currentSecsSinceEpoch();
+        }
+    });
+    m_refreshTimer->start(1000);
+}
+
 void LoginController::onTimer()
 {
     BrowserWindow::getInstance()->runJsCode("GetLoginInfo", JsCodeManager::getInstance()->m_getLoginInfo);
@@ -74,6 +116,9 @@ void LoginController::onRunJsCodeFinished(const QString& id, const QVariant& res
             StatusManager::getInstance()->setCookies(cookies);
             emit printLog(QString::fromWCharArray(L"已登录"));
             stop();
+
+            // 开启刷新登录定时器
+            startRefreshLoginInfo();
         }
     }
     else if (id == "fillUserPassword")
