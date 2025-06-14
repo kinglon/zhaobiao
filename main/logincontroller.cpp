@@ -61,7 +61,7 @@ void LoginController::startRefreshLoginInfo()
     connect(m_refreshTimer, &QTimer::timeout, [this]() {
         static qint64 lastRefreshTime = QDateTime::currentSecsSinceEpoch();
         qint64 now = QDateTime::currentSecsSinceEpoch();
-        if (now - lastRefreshTime >= 1800)
+        if (now - lastRefreshTime >= 3600)
         {
             // 检索一次，登录就不会过期
             emit printLog(QString::fromWCharArray(L"开始检索保持登录在线"));
