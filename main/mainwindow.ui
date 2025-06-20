@@ -34,7 +34,26 @@
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="lineEditUserName"/>
+        <widget class="QLineEdit" name="lineEditUserName">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>120</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>120</width>
+           <height>16777215</height>
+          </size>
+         </property>
+        </widget>
        </item>
        <item>
         <widget class="QLabel" name="label_5">
@@ -44,41 +63,26 @@
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="lineEditPassword"/>
-       </item>
-       <item>
-        <widget class="QLabel" name="label_6">
-         <property name="text">
-          <string>搜索日期</string>
+        <widget class="QLineEdit" name="lineEditPassword">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>120</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>120</width>
+           <height>16777215</height>
+          </size>
          </property>
         </widget>
-       </item>
-       <item>
-        <widget class="QDateEdit" name="dateEditSearchBegin"/>
-       </item>
-       <item>
-        <widget class="QLabel" name="label_7">
-         <property name="text">
-          <string>到</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QDateEdit" name="dateEditSearchEnd"/>
-       </item>
-      </layout>
-     </item>
-     <item>
-      <layout class="QHBoxLayout" name="horizontalLayout_2">
-       <item>
-        <widget class="QLabel" name="label_8">
-         <property name="text">
-          <string>搜索省份</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLineEdit" name="lineEditSearchProvince"/>
        </item>
        <item>
         <widget class="QLabel" name="label_9">
@@ -92,62 +96,14 @@
        </item>
        <item>
         <widget class="QCheckBox" name="checkBoxDownloadAttachment">
-         <property name="text">
-          <string>下载附件</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </item>
-     <item>
-      <layout class="QHBoxLayout" name="horizontalLayout">
-       <item>
-        <widget class="QCheckBox" name="checkBoxKuangShan">
-         <property name="text">
-          <string>矿山</string>
-         </property>
-         <property name="checked">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="checkBoxBaoPoShiGong">
-         <property name="text">
-          <string>爆破施工</string>
-         </property>
-         <property name="checked">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="checkBoxBaoPoFuWu">
-         <property name="text">
-          <string>爆破服务</string>
-         </property>
-         <property name="checked">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="checkBoxDiZhiZaiHai">
-         <property name="text">
-          <string>地质灾害</string>
-         </property>
-         <property name="checked">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QWidget" name="widget" native="true">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
+         </property>
+         <property name="text">
+          <string>下载附件</string>
          </property>
         </widget>
        </item>

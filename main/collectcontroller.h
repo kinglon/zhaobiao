@@ -57,9 +57,6 @@ class KuangShanCollectThread : public CollectThread
 
 protected:
     virtual void runInternal() override;
-
-private:
-    bool doSave(const QVector<ZhaoBiao>& zhaoBiaos);
 };
 
 // 爆破服务类的采集流程
@@ -69,9 +66,6 @@ class BaoPoFuWuCollectThread : public CollectThread
 
 protected:
     virtual void runInternal() override;
-
-private:
-    bool doSave(const QVector<ZhaoBiao>& zhaoBiaos);
 };
 
 class CollectController : public QObject
@@ -116,6 +110,9 @@ private:
 
     // 采集结果保存根路径，尾部没有后划线
     QString m_savedRootPath;
+
+    // 下一个采集的筛选设置的索引
+    int m_nextFilterSettingIndex = 0;
 
     // 下一个采集的关键词索引
     int m_nextKeyWordIndex = 0;

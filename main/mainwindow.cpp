@@ -34,23 +34,8 @@ MainWindow::~MainWindow()
 void MainWindow::initCtrls()
 {
     ui->lineEditUserName->setText(SettingManager::getInstance()->m_userName);
-    ui->lineEditPassword->setText(SettingManager::getInstance()->m_password);
-    ui->lineEditSearchProvince->setText(SettingManager::getInstance()->m_searchProvince);
+    ui->lineEditPassword->setText(SettingManager::getInstance()->m_password);    
     ui->lineEditPriorityProvince->setText(SettingManager::getInstance()->m_priorityRegions);
-
-    QDateTime searchEndDate = QDateTime::currentDateTime();
-    if (SettingManager::getInstance()->m_searchEndDate > 0)
-    {
-        searchEndDate = QDateTime::fromSecsSinceEpoch(SettingManager::getInstance()->m_searchEndDate);
-    }
-    ui->dateEditSearchEnd->setDate(searchEndDate.date());
-
-    QDateTime searchBeginDate = searchEndDate.addDays(-3);
-    if (SettingManager::getInstance()->m_searchBeginDate > 0)
-    {
-        searchBeginDate = QDateTime::fromSecsSinceEpoch(SettingManager::getInstance()->m_searchBeginDate);
-    }
-    ui->dateEditSearchBegin->setDate(searchBeginDate.date());
 
     connect(ui->pushButtonLogin, &QPushButton::clicked, this, &MainWindow::onLoginButtonClicked);
     connect(ui->pushButtonStart, &QPushButton::clicked, this, &MainWindow::onStartButtonClicked);
@@ -79,17 +64,25 @@ void MainWindow::initController()
     arguments.append("hide");
     UpdateUtil::startUpgradeProgram("", arguments);
 
-    connect(&m_loginController, &LoginController::printLog, this, &MainWindow::onPrintLog);    
+    connect(&m_loginController, &LoginController::printLog, this, &MainWindow::onPrintLog);
+
+    // 启动定时器
+    QTimer* timer = new QTimer(this);
+    connect(timer, &QTimer::timeout, this, &MainWindow::onTimer);
+    timer->start(1000);
 }
 
 void MainWindow::saveSetting()
-{
+{    
+    QDateTime dateTime;
+    dateTime.setDate(QDate::currentDate());
+    SettingManager::getInstance()->m_searchEndDate = dateTime.toSecsSinceEpoch();
+    dateTime.setDate(QDate::currentDate().addDays(-1));
+    SettingManager::getInstance()->m_searchBeginDate = dateTime.toSecsSinceEpoch();
+
     SettingManager::getInstance()->m_userName = ui->lineEditUserName->text();
     SettingManager::getInstance()->m_password = ui->lineEditPassword->text();
-    SettingManager::getInstance()->m_searchProvince = ui->lineEditSearchProvince->text();
     SettingManager::getInstance()->m_priorityRegions = ui->lineEditPriorityProvince->text();
-    SettingManager::getInstance()->m_searchBeginDate = ui->dateEditSearchBegin->dateTime().toSecsSinceEpoch();
-    SettingManager::getInstance()->m_searchEndDate = ui->dateEditSearchEnd->dateTime().toSecsSinceEpoch();
     SettingManager::getInstance()->save();
 }
 
@@ -121,10 +114,41 @@ void MainWindow::onLoginButtonClicked()
     m_loginController.run();
 }
 
+void MainWindow::doCollect()
+{
+    StatusManager::getInstance()->m_downloadAttachment = ui->checkBoxDownloadAttachment->isChecked();
+    saveSetting();
+    m_nextCollectTime = 0;
+
+    m_collectController = new CollectController();
+    connect(m_collectController, &CollectController::printLog, this, &MainWindow::onPrintLog);
+    connect(m_collectController, &CollectController::runFinish, [this](bool success, QString savedPath) {
+        m_collectController->deleteLater();
+        m_collectController = nullptr;
+
+        if (success)
+        {
+            m_lastSavedPath = savedPath;
+
+            // 明天8点半自动采集
+            QDateTime nextCollectDateTime;
+            nextCollectDateTime.setDate(QDate::currentDate().addDays(1));
+            nextCollectDateTime.setTime(QTime(8, 30));
+            m_nextCollectTime = nextCollectDateTime.toSecsSinceEpoch();
+        }
+        else
+        {
+            m_collecting = false;
+        }
+        updateButtonStatus();
+    });
+    m_collecting = true;
+    updateButtonStatus();
+    m_collectController->run();
+}
+
 void MainWindow::onStartButtonClicked()
 {
-    saveSetting();
-
     // 检测是否有新版本
     QString currentVersion;
     QString newVersion;
@@ -142,63 +166,54 @@ void MainWindow::onStartButtonClicked()
         return;
     }
 
-    StatusManager::getInstance()->m_downloadAttachment = ui->checkBoxDownloadAttachment->isChecked();
-
-    // 获取搜索关键词列表
-    QCheckBox* keyWordCheckBoxes[4] = {
-        ui->checkBoxKuangShan, ui->checkBoxBaoPoShiGong,
-        ui->checkBoxBaoPoFuWu, ui->checkBoxDiZhiZaiHai
-    };
-    StatusManager::getInstance()->m_searchFilterKeyWords.clear();
-    for (int i=0; i<sizeof(keyWordCheckBoxes)/sizeof(keyWordCheckBoxes[0]); i++)
-    {
-        if (keyWordCheckBoxes[i]->isChecked())
-        {
-            QString type = keyWordCheckBoxes[i]->text();
-            for (const auto& keyWord : SettingManager::getInstance()->m_filterKeyWords)
-            {
-                if (type == keyWord.m_type)
-                {
-                    StatusManager::getInstance()->m_searchFilterKeyWords.append(keyWord);
-                    break;
-                }
-            }
-        }
-    }
-    if (StatusManager::getInstance()->m_searchFilterKeyWords.empty())
-    {
-        UiUtil::showTip(QString::fromWCharArray(L"请选择要采集的关键词"));
-        return;
-    }
-
-    m_collectController = new CollectController();
-    connect(m_collectController, &CollectController::printLog, this, &MainWindow::onPrintLog);
-    connect(m_collectController, &CollectController::runFinish, [this](bool success, QString savedPath) {
-        m_collecting = false;
-        if (success)
-        {
-            m_lastSavedPath = savedPath;
-        }
-        updateButtonStatus();
-        m_collectController->deleteLater();
-        m_collectController = nullptr;
-    });
-    m_collecting = true;
-    updateButtonStatus();
-    m_collectController->run();
+    doCollect();
 }
 
 void MainWindow::onStopButtonClicked()
 {
+    m_nextCollectTime = 0;
+
     if (m_collectController)
     {
         m_collectController->stop();
+    }
+    else
+    {
+        m_collecting = false;
+        updateButtonStatus();
     }
 }
 
 void MainWindow::onOpenFolderButtonClicked()
 {
     QDesktopServices::openUrl(QUrl::fromLocalFile(m_lastSavedPath));
+}
+
+void MainWindow::onTimer()
+{
+    if (m_nextCollectTime > 0)
+    {
+        qint64 now = QDateTime::currentSecsSinceEpoch();
+        if (now >= m_nextCollectTime)
+        {
+            onPrintLog(QString::fromWCharArray(L"开始自动采集"));
+            doCollect();
+        }
+        else
+        {
+            // 每隔1分钟提醒一次
+            int elpase = m_nextCollectTime-now;
+            if (elpase % 60 == 0)
+            {
+                QString nextCollectTimeString = QDateTime::fromSecsSinceEpoch(m_nextCollectTime).toString("yyyy-MM-dd hh:mm:ss");
+                QString hour = QString::number(elpase / 3600);
+                QString min = QString::number(elpase % 3600 / 60);
+                QString second = QString::number(elpase % 60);
+                QString message = QString::fromWCharArray(L"下次采集时间：%1，还剩：%2时%3分%4秒").arg(nextCollectTimeString, hour, min, second);
+                onPrintLog(message);
+            }
+        }
+    }
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)

@@ -74,7 +74,7 @@ void LoginController::startRefreshLoginInfo()
             condition.m_beginDate = today.toString("yyyy-MM-dd");
             condition.m_endDate = condition.m_beginDate;
             condition.m_onlyTitleField = false;
-            condition.m_province = SettingManager::getInstance()->m_searchProvince;
+            condition.m_province = "";
             condition.m_keyWord = QString::fromWCharArray(L"矿山");
             condition.m_channels = "bidding%2Cfore%2Cpurchase%2Cfree%2Crecommend%2Cproposed%2Centrust%2Capproved%2Ccommerce%2Clisted%2Cproperty%2Cmineral%2Cland%2Cauction%2Cother";
             condition.m_page = 1;

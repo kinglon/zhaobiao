@@ -17,8 +17,8 @@ public:
     QString getCookies();
 
 public:
-    // 需要搜索的关键词列表
-    QVector<FilterKeyWord> m_searchFilterKeyWords;
+    // 当前筛选设置
+    FilterSetting m_currentFilterSetting;
 
     // 当前搜索的关键词
     FilterKeyWord m_currentFilterKeyWord;

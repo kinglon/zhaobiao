@@ -235,6 +235,20 @@ bool CollectThread::doGetDetail(ZhaoBiaoHttpClient& client, QVector<ZhaoBiao>& z
 
 bool CollectThread::doSave(QString excelFilePath, const QVector<ZhaoBiao>& zhaoBiaos)
 {
+    if (excelFilePath.isEmpty())
+    {
+        // 拷贝表格模板到保存目录
+        QString excelFileName = QString::fromWCharArray(L"输出表格模板.xlsx");
+        QString srcExcelFilePath = QString::fromStdWString(CImPath::GetConfPath()) + excelFileName;
+        QString currentType = StatusManager::getInstance()->m_currentFilterKeyWord.m_type;
+        excelFilePath = m_savedPath+"\\"+currentType+".xlsx";
+        if (!::CopyFile(srcExcelFilePath.toStdWString().c_str(), excelFilePath.toStdWString().c_str(), TRUE))
+        {
+            emit printLog(QString::fromWCharArray(L"拷贝表格模板到保存目录失败"));
+            return false;
+        }
+    }
+
     Document xlsx(excelFilePath);
     if (!xlsx.load())
     {
@@ -369,7 +383,7 @@ void BaoPoFuWuCollectThread::runInternal()
     condition.m_beginDate = searchBeginDateStr;
     condition.m_endDate = searchEndDateStr;
     condition.m_onlyTitleField = false;
-    condition.m_province = SettingManager::getInstance()->m_searchProvince;
+    condition.m_province = StatusManager::getInstance()->m_currentFilterSetting.m_searchProvince;
     condition.m_keyWord = StatusManager::getInstance()->m_currentFilterKeyWord.m_contentKeyWord;
     condition.m_channels = "bidding%2Cfore%2Cpurchase%2Cfree%2Crecommend%2Cproposed%2Centrust%2Capproved%2Ccommerce%2Clisted%2Cproperty%2Cmineral%2Cland%2Cauction%2Cother";
 
@@ -433,7 +447,7 @@ void BaoPoFuWuCollectThread::runInternal()
 
     // 保存采集结果
     emit printLog(QString::fromWCharArray(L"保存采集结果"));
-    if (!doSave(targetZhaoBiaos))
+    if (!doSave("", targetZhaoBiaos))
     {
         return;
     }
@@ -459,57 +473,6 @@ void BaoPoFuWuCollectThread::runInternal()
     m_success = true;
 }
 
-bool BaoPoFuWuCollectThread::doSave(const QVector<ZhaoBiao>& zhaoBiaos)
-{
-    // 分成3个表格保存：监理、评估、其他
-    static QString jianLi = QString::fromWCharArray(L"监理");
-    static QString pingGu = QString::fromWCharArray(L"评估");
-    const int TYPE_COUNT = 3;
-    static QString names[TYPE_COUNT] = {
-        jianLi,
-        pingGu,
-        QString::fromWCharArray(L"其他")
-    };
-
-    QVector<ZhaoBiao> filterZhaoBiaos[TYPE_COUNT];
-    for (const auto& zhaoBiao : zhaoBiaos)
-    {
-        if (zhaoBiao.m_title.contains(jianLi))
-        {
-            filterZhaoBiaos[0].append(zhaoBiao);
-        }
-        else if (zhaoBiao.m_title.contains(pingGu))
-        {
-            filterZhaoBiaos[1].append(zhaoBiao);
-        }
-        else
-        {
-            filterZhaoBiaos[2].append(zhaoBiao);
-        }
-    }
-
-    QString currentType = StatusManager::getInstance()->m_currentFilterKeyWord.m_type;
-    for (int i=0; i<TYPE_COUNT; i++)
-    {
-        // 拷贝表格模板到保存目录
-        QString excelFileName = QString::fromWCharArray(L"输出表格模板.xlsx");
-        QString srcExcelFilePath = QString::fromStdWString(CImPath::GetConfPath()) + excelFileName;
-        QString destExcelFilePath = m_savedPath+"\\"+currentType+names[i]+".xlsx";
-        if (!::CopyFile(srcExcelFilePath.toStdWString().c_str(), destExcelFilePath.toStdWString().c_str(), TRUE))
-        {
-            emit printLog(QString::fromWCharArray(L"拷贝表格模板到保存目录失败"));
-            return false;
-        }
-
-        if (!CollectThread::doSave(destExcelFilePath, filterZhaoBiaos[i]))
-        {
-            return false;
-        }
-    }
-
-    return true;
-}
-
 void KuangShanCollectThread::runInternal()
 {
     ZhaoBiaoHttpClient client;
@@ -528,7 +491,7 @@ void KuangShanCollectThread::runInternal()
     condition.m_beginDate = searchBeginDateStr;
     condition.m_endDate = searchEndDateStr;
     condition.m_onlyTitleField = false;
-    condition.m_province = SettingManager::getInstance()->m_searchProvince;
+    condition.m_province = StatusManager::getInstance()->m_currentFilterSetting.m_searchProvince;
     condition.m_keyWord = StatusManager::getInstance()->m_currentFilterKeyWord.m_contentKeyWord;
     condition.m_channels = "bidding%2Cfore%2Cpurchase%2Cfree%2Crecommend%2Cproposed%2Centrust%2Capproved%2Ccommerce%2Clisted%2Cproperty%2Cmineral%2Cland%2Cauction%2Cother";
 
@@ -652,7 +615,7 @@ void KuangShanCollectThread::runInternal()
 
     // 保存采集结果
     emit printLog(QString::fromWCharArray(L"保存采集结果"));
-    if (!doSave(targetZhaoBiaos))
+    if (!doSave("", targetZhaoBiaos))
     {
         return;
     }
@@ -676,50 +639,6 @@ void KuangShanCollectThread::runInternal()
     doDownload(client, targetZhaoBiaos);
 
     m_success = true;
-}
-
-bool KuangShanCollectThread::doSave(const QVector<ZhaoBiao>& zhaoBiaos)
-{
-    // 分成2个表格保存：重要、一般
-    const int TYPE_COUNT = 2;
-    static QString names[TYPE_COUNT] = {
-        QString::fromWCharArray(L"重要"),
-        QString::fromWCharArray(L"一般")
-    };
-
-    QVector<ZhaoBiao> filterZhaoBiaos[TYPE_COUNT];
-    for (const auto& zhaoBiao : zhaoBiaos)
-    {
-        if (zhaoBiao.m_priorityLevel == ZhaoBiao::PRIORITY_LEVEL_HIGH)
-        {
-            filterZhaoBiaos[0].append(zhaoBiao);
-        }
-        else
-        {
-            filterZhaoBiaos[1].append(zhaoBiao);
-        }
-    }
-
-    QString currentType = StatusManager::getInstance()->m_currentFilterKeyWord.m_type;
-    for (int i=0; i<TYPE_COUNT; i++)
-    {
-        // 拷贝表格模板到保存目录
-        QString excelFileName = QString::fromWCharArray(L"输出表格模板.xlsx");
-        QString srcExcelFilePath = QString::fromStdWString(CImPath::GetConfPath()) + excelFileName;
-        QString destExcelFilePath = m_savedPath+"\\"+currentType+names[i]+".xlsx";
-        if (!::CopyFile(srcExcelFilePath.toStdWString().c_str(), destExcelFilePath.toStdWString().c_str(), TRUE))
-        {
-            emit printLog(QString::fromWCharArray(L"拷贝表格模板到保存目录失败"));
-            return false;
-        }
-
-        if (!CollectThread::doSave(destExcelFilePath, filterZhaoBiaos[i]))
-        {
-            return false;
-        }
-    }
-
-    return true;
 }
 
 CollectController::CollectController(QObject *parent)
@@ -766,15 +685,6 @@ void CollectController::run()
 
     connect(BrowserWindow::getInstance(), &BrowserWindow::runJsCodeFinished, this, &CollectController::onRunJsCodeFinished);
 
-    if (SettingManager::getInstance()->m_searchProvince.isEmpty())
-    {
-        emit printLog(QString::fromWCharArray(L"搜索省份：全国"));
-    }
-    else
-    {
-        emit printLog(QString::fromWCharArray(L"搜索省份：%1").arg(SettingManager::getInstance()->m_searchProvince));
-    }
-
     doCollectNextKeyWords();
     m_running = true;
 }
@@ -810,14 +720,35 @@ void CollectController::doCollectNextKeyWords()
         return;
     }
 
-    if (m_nextKeyWordIndex >= StatusManager::getInstance()->m_searchFilterKeyWords.length())
+    bool finish = false;
+    if (m_nextFilterSettingIndex >= SettingManager::getInstance()->m_filterSettingList.size())
+    {
+        finish = true;
+    }
+    else
+    {
+        const FilterSetting& currentFilterSetting = SettingManager::getInstance()->m_filterSettingList[m_nextFilterSettingIndex];
+        if (m_nextKeyWordIndex >= currentFilterSetting.m_filterKeyWord.size())
+        {
+            m_nextFilterSettingIndex++;
+            m_nextKeyWordIndex = 0;
+        }
+
+        if (m_nextFilterSettingIndex >= SettingManager::getInstance()->m_filterSettingList.size())
+        {
+            finish = true;
+        }
+    }
+
+    if (finish)
     {
         emit printLog(QString::fromWCharArray(L"全部采集完成"));
         doFinish(true);
         return;
     }
 
-    StatusManager::getInstance()->m_currentFilterKeyWord = StatusManager::getInstance()->m_searchFilterKeyWords[m_nextKeyWordIndex];
+    StatusManager::getInstance()->m_currentFilterSetting = SettingManager::getInstance()->m_filterSettingList[m_nextFilterSettingIndex];
+    StatusManager::getInstance()->m_currentFilterKeyWord = StatusManager::getInstance()->m_currentFilterSetting.m_filterKeyWord[m_nextKeyWordIndex];
     QString currentType = StatusManager::getInstance()->m_currentFilterKeyWord.m_type;
     if (currentType == QString::fromWCharArray(L"爆破服务"))
     {
@@ -828,7 +759,8 @@ void CollectController::doCollectNextKeyWords()
         m_collectThread = new KuangShanCollectThread();
     }
 
-    m_collectThread->m_savedPath = m_savedRootPath + "\\" + currentType;
+    QString todayString = QDate::currentDate().toString(" yyyyMMdd");
+    m_collectThread->m_savedPath = m_savedRootPath + "\\" + StatusManager::getInstance()->m_currentFilterSetting.m_folderName + todayString;
     if (!QDir().mkpath(m_collectThread->m_savedPath))
     {
         delete m_collectThread;
@@ -843,7 +775,7 @@ void CollectController::doCollectNextKeyWords()
     connect(m_collectThread, &CollectThread::updateCookie, this, &CollectController::onUpdateCookie);
     connect(m_collectThread, &CollectThread::finished, this, &CollectController::onThreadFinish);
 
-    emit printLog(QString::fromWCharArray(L"开始采集%1类别的项目").arg(currentType));
+    emit printLog(QString::fromWCharArray(L"开始采集%1/%2项目").arg(StatusManager::getInstance()->m_currentFilterSetting.m_name, currentType));
     m_collectThread->start();
 }
 

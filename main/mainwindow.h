@@ -31,6 +31,9 @@ private slots:
 
     void onOpenFolderButtonClicked();
 
+    // 每秒触发一次
+    void onTimer();
+
 private:
     void initCtrls();
 
@@ -44,6 +47,8 @@ private:
 
     void closeEvent(QCloseEvent *event) override;
 
+    void doCollect();
+
 private:
     Ui::MainWindow *ui;
 
@@ -56,5 +61,8 @@ private:
 
     // 最后一次采集保存目录
     QString m_lastSavedPath;
+
+    // 下一次采集的时间
+    qint64 m_nextCollectTime = 0;
 };
 #endif // MAINWINDOW_H

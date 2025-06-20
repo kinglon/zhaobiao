@@ -11,7 +11,8 @@ SettingManager::SettingManager()
 {
     load();
     loadConfig2();
-    loadKeyWord();
+    m_defaultFilterKeyWordList = loadKeyWord(QString::fromWCharArray(L"搜索关键词.txt"));
+    loadFilterSetting();
 }
 
 SettingManager* SettingManager::getInstance()
@@ -72,8 +73,7 @@ void SettingManager::loadConfig2()
     m_userName = root["userName"].toString();
     m_password = root["password"].toString();
     m_searchBeginDate = root["searchBeginDate"].toInt();
-    m_searchEndDate = root["searchEndDate"].toInt();    
-    m_searchProvince = root["searchProvince"].toString();
+    m_searchEndDate = root["searchEndDate"].toInt();
     m_priorityRegions = root["priorityRegions"].toString();
 }
 
@@ -84,7 +84,6 @@ void SettingManager::save()
     root["password"] = m_password;
     root["searchBeginDate"] = m_searchBeginDate;
     root["searchEndDate"] = m_searchEndDate;
-    root["searchProvince"] = m_searchProvince;
     root["priorityRegions"] = m_priorityRegions;
 
     QJsonDocument jsonDocument(root);
@@ -100,19 +99,20 @@ void SettingManager::save()
     file.close();
 }
 
-void SettingManager::loadKeyWord()
+QVector<FilterKeyWord> SettingManager::loadKeyWord(QString keyWordFileName)
 {
-    std::wstring strConfFilePath = CImPath::GetConfPath() + L"搜索关键词.txt";
-    QFile file(QString::fromStdWString(strConfFilePath));
+    QVector<FilterKeyWord> keyWordList;
+    QString strConfFilePath = QString::fromStdWString(CImPath::GetConfPath()) + keyWordFileName;
+    QFile file(strConfFilePath);
     if (!file.exists())
     {
-        return;
+        return keyWordList;
     }
 
     if (!file.open(QIODevice::ReadOnly))
     {
-        LOG_ERROR(L"failed to open the keyword configure file : %s", strConfFilePath.c_str());
-        return;
+        LOG_ERROR(L"failed to open the keyword configure file : %s", strConfFilePath.toStdString().c_str());
+        return keyWordList;
     }
 
     QTextStream in(&file);
@@ -138,7 +138,7 @@ void SettingManager::loadKeyWord()
 
         // 根据类别创建或更新FilterKeyWord对象
         FilterKeyWord* existing = nullptr;
-        for (FilterKeyWord& kw : m_filterKeyWords)
+        for (FilterKeyWord& kw : keyWordList)
         {
             if (kw.m_type == type)
             {
@@ -159,7 +159,7 @@ void SettingManager::loadKeyWord()
                 newKw.m_contentKeyWord = keyword;
             else if (category == QString::fromWCharArray(L"资质"))
                 newKw.m_ziZhiKeyWord = keyword;
-            m_filterKeyWords.append(newKw);
+            keyWordList.append(newKw);
         }
         else
         {
@@ -171,6 +171,64 @@ void SettingManager::loadKeyWord()
                 existing->m_contentKeyWord = keyword;
             else if (category == QString::fromWCharArray(L"资质"))
                 existing->m_ziZhiKeyWord = keyword;
+        }
+    }
+
+    file.close();
+
+    return keyWordList;
+}
+
+void SettingManager::loadFilterSetting()
+{
+    std::wstring strConfFilePath = CImPath::GetConfPath() + L"人员.txt";
+    QFile file(QString::fromStdWString(strConfFilePath));
+    if (!file.exists())
+    {
+        return;
+    }
+
+    if (!file.open(QIODevice::ReadOnly))
+    {
+        LOG_ERROR(L"failed to open the filter configure file : %s", strConfFilePath.c_str());
+        return;
+    }
+
+    QTextStream in(&file);
+    in.setCodec("UTF-8");
+    while (!in.atEnd())
+    {
+        QString line = in.readLine().trimmed();
+
+        // 跳过空行和注释行
+        if (line.isEmpty() || line.startsWith('#'))
+            continue;
+
+        // 按分隔符'/'分割行
+        QStringList parts = line.split('/');
+
+        // 确保有4部分：发送人、文件命名、搜索省份列表、搜索关键词配置文件名称
+        if (parts.size() != 4)
+            continue;
+
+        FilterSetting filterSetting;
+        filterSetting.m_name = parts[0].trimmed();
+        filterSetting.m_folderName = parts[1].trimmed();
+        filterSetting.m_searchProvince = parts[2].trimmed();
+        QString keyWordFileName = parts[3].trimmed();
+        if (!keyWordFileName.isEmpty())
+        {
+            filterSetting.m_filterKeyWord = loadKeyWord(keyWordFileName);
+        }
+
+        if (filterSetting.m_filterKeyWord.isEmpty())
+        {
+            filterSetting.m_filterKeyWord = m_defaultFilterKeyWordList;
+        }
+
+        if (filterSetting.valid())
+        {
+            m_filterSettingList.append(filterSetting);
         }
     }
 
